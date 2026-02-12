@@ -1,5 +1,13 @@
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--charcoal);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
 h1:focus {
@@ -17,7 +25,7 @@ a, .btn-link {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 .content {
@@ -113,3 +121,197 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+:root {
+    --primary: #AC0000;
+    --secondary: #EF88AD;
+    --ternary: #700507;
+    --charcoal: #333333;
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-soft: #fafafa;
+    --border: #e0e0e0;
+    --radius: 12px;
+}
+
+.auth-page {
+    min-height: calc(100vh - 64px);
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: var(--bg);
+}
+
+.auth-card {
+    width: min(460px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+
+.auth-header h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.auth-header p {
+    margin: 6px 0 18px;
+    color: var(--muted);
+}
+
+.field {
+    display: block;
+    margin: 12px 0;
+}
+
+    .field span {
+        display: block;
+        margin: 0 0 6px;
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+.input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface-soft);
+    color: var(--charcoal);
+    outline: none;
+}
+    .input:focus {
+        border-color: var(--charcoal);
+        box-shadow: 0 0 0 3px rgba(239,136,173,.25);
+    }
+
+.btn {
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+    .btn:disabled {
+        opacity: 0.7;
+        cursor: default;
+    }
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 1px 2px rgba(0,0,0,.08);
+}
+
+.auth-error {
+    border: 1px solid rgba(214,69,69,.35);
+    background: rgba(214,69,69,.12);
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin: 0 0 12px;
+}
+
+.topbar {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.topbar-title {
+    font-weight: 650;
+    font-size: 18px;
+    letter-spacing: 0.2px;
+}
+
+.logo {
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.logout-btn {
+    padding: 8px 14px;
+    border-radius: 14px;
+    border: none;
+    background: #d64545;
+    color: white;
+    cursor: pointer;
+}
+
+    .logout-btn:hover {
+        opacity: 0.9;
+    }
+
+.page-content {
+    padding: 24px;
+}
+
+.settings-page {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.settings-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 32px;
+}
+
+.settings-header {
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+    .settings-header h1 {
+        margin: 0 0 8px 0;
+        font-size: 28px;
+        color: #333;
+    }
+
+    .settings-header p {
+        margin: 0;
+        color: #666;
+    }
+
+.settings-section {
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .settings-section:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .settings-section h2 {
+        margin: 0 0 20px 0;
+        font-size: 20px;
+        color: #333;
+    }
+
+.auth-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.text-muted {
+    color: #999;
+    font-style: italic;
+} 
+
+/*TODO Move css to page-/component specific file or start using tailwind?*/

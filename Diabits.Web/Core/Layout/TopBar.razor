@@ -1,0 +1,22 @@
+﻿@using Diabits.Web.Features.Auth.Services
+@inject AuthService AuthService
+@inject NavigationManager Nav
+
+ <header class="topbar">
+    <div class="topbar-left">
+        <span class="topbar-title">Diabits</span>
+    </div>
+
+    <div class="topbar-right">
+        <button class="btn btn-primary" @onclick="LogoutAsync">Sign out</button>
+    </div>
+</header> 
+
+
+@code {
+    private async Task LogoutAsync()
+    {
+        await AuthService.LogoutAsync();
+        Nav.NavigateTo("/login");
+    }
+}

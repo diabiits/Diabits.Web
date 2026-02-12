@@ -1,0 +1,168 @@
+﻿@page "/settings"
+@attribute [Authorize]
+@using System.ComponentModel.DataAnnotations
+@using Diabits.Web.Features.Auth.Services
+@using Microsoft.AspNetCore.Authorization
+@inject AuthApiClient AuthApi
+@inject NavigationManager Nav
+
+<main class="settings-page">
+    <div class="settings-container">
+        <header class="settings-header">
+            <h1>Account Settings</h1>
+            <p>Manage your account preferences</p>
+        </header>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="auth-error">@_error</div>
+        }
+
+        @if (!string.IsNullOrEmpty(_success))
+        {
+            <div class="auth-success">@_success</div>
+        }
+
+        <EditForm Model="_model" OnValidSubmit="UpdateAccountAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <section class="settings-section">
+                <h2>Change Username</h2>
+                <label class="field">
+                    <span>New Username (optional)</span>
+                    <InputText class="input" @bind-Value="_model.NewUsername" placeholder="Leave blank to keep current" />
+                </label>
+            </section>
+
+            <section class="settings-section">
+                <h2>Change Password</h2>
+                <label class="field">
+                    <span>New Password (optional)</span>
+                    <InputText class="input" type="password" @bind-Value="_model.NewPassword" placeholder="Leave blank to keep current" />
+                </label>
+
+                <label class="field">
+                    <span>Confirm New Password</span>
+                    <InputText class="input" type="password" @bind-Value="_model.ConfirmPassword" placeholder="Only if changing password" />
+                </label>
+            </section>
+
+            <section class="settings-section">
+                <h2>Confirm Changes</h2>
+                <label class="field">
+                    <span>Current Password (required)</span>
+                    <InputText class="input" type="password" @bind-Value="_model.CurrentPassword" />
+                    <small>Required to confirm any changes</small>
+                </label>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary" disabled="@_busy">
+                        @(_busy ? "Updating..." : "Save Changes")
+                    </button>
+                    <button type="button" class="btn btn-secondary" @onclick="Cancel">
+                        Cancel
+                    </button>
+                </div>
+            </section>
+        </EditForm>
+    </div>
+</main>
+
+@code {
+    private readonly UpdateAccountModel _model = new();
+    private bool _busy;
+    private string? _error;
+    private string? _success;
+
+    //TODO form validator?
+    private async Task UpdateAccountAsync()
+    {
+        _busy = true;
+        _error = null;
+        _success = null;
+
+        // Validate at least one change is being made
+        var hasUsernameChange = !string.IsNullOrWhiteSpace(_model.NewUsername);
+        var hasPasswordChange = !string.IsNullOrWhiteSpace(_model.NewPassword);
+
+        if (!hasUsernameChange && !hasPasswordChange)
+        {
+            _error = "Please provide a new username or password to update.";
+            _busy = false;
+            return;
+        }
+
+        // Validate password change if provided
+        if (hasPasswordChange)
+        {
+            if (_model.NewPassword != _model.ConfirmPassword)
+            {
+                _error = "New password and confirmation do not match.";
+                _busy = false;
+                return;
+            }
+
+            if (_model.NewPassword.Length < 8)
+            {
+                _error = "New password must be at least 8 characters.";
+                _busy = false;
+                return;
+            }
+        }
+
+        // Validate username if provided
+        if (hasUsernameChange && _model.NewUsername!.Length < 3)
+        {
+            _error = "Username must be at least 3 characters.";
+            _busy = false;
+            return;
+        }
+
+        try
+        {
+            var result = await AuthApi.UpdateAccountAsync(
+                _model.CurrentPassword,
+                hasUsernameChange ? _model.NewUsername : null,
+                hasPasswordChange ? _model.NewPassword : null);
+
+            if (!result.Ok)
+            {
+                _error = result.Error ?? "Failed to update account.";
+                return;
+            }
+
+            var changes = new List<string>();
+            if (hasUsernameChange) changes.Add("username");
+            if (hasPasswordChange) changes.Add("password");
+
+            _success = $"Successfully updated {string.Join(" and ", changes)}!";
+            
+            // Clear the form
+            _model.NewUsername = "";
+            _model.NewPassword = "";
+            _model.ConfirmPassword = "";
+            _model.CurrentPassword = "";
+        }
+        catch
+        {
+            _error = "Backend unavailable. Try again later.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Cancel() => Nav.NavigateTo("/");
+
+    private sealed class UpdateAccountModel
+    {
+        public string? NewUsername { get; set; }
+        public string? NewPassword { get; set; }
+        public string? ConfirmPassword { get; set; }
+
+        [Required(ErrorMessage = "Current password is required to confirm changes")]
+        public string CurrentPassword { get; set; } = "";
+    }
+}

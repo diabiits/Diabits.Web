@@ -1,0 +1,84 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using Diabits.Web.Features.Auth.Services
+@inject AuthService AuthService
+@inject NavigationManager Nav
+
+<MudForm @ref="loginForm">
+    <MudTextField T="string" Label="Username" Required="true" RequiredError="User name is required!"/>
+    <MudTextField T="string" Label="Password"  InputType="InputType.Password" Required="true" RequiredError="Password is required!" />
+    <div class="d-flex align-center justify-space-between"> 
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton> 
+    </div>
+</MudForm>
+
+<main class="auth-page">
+    <section class="auth-card">
+        <header class="auth-header">
+            <h1>Diabits</h1>
+            <p>Sign in to view insights</p>
+        </header>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="auth-error">@_error</div>
+        }
+
+        <EditForm Model="_model" OnValidSubmit="SubmitAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <label class="field">
+                <span>Username</span>
+                <InputText class="input" @bind-Value="_model.Username" />
+            </label>
+
+            <label class="field">
+                <span>Password</span>
+                <InputText class="input" type="password" @bind-Value="_model.Password" />
+            </label>
+
+            <button type="submit" class="btn btn-primary" disabled="@_busy">Sign in</button>
+        </EditForm>
+    </section>
+</main>
+
+@code {
+    private readonly LoginModel _model = new();
+    private bool _busy;
+    private string? _error;
+
+    MudForm loginForm;
+
+    private async Task SubmitAsync()
+    {
+        _busy = true;
+        _error = null;
+
+        try
+        {
+            var result = await AuthService.LoginAsync(_model.Username, _model.Password);
+            if (!result.Ok)
+            {
+                _error = "Login failed. Check username/password.";
+                return;
+            }
+
+            Nav.NavigateTo("/");
+        }
+        catch
+        {
+            _error = "Backend unavailable. Try again.";
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private sealed class LoginModel
+    {
+        [Required] public string Username { get; set; } = "";
+        [Required] public string Password { get; set; } = "";
+    }
+}
