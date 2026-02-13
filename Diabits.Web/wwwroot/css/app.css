@@ -312,6 +312,25 @@ code {
 .text-muted {
     color: #999;
     font-style: italic;
-} 
+}
+
+/*.auth-left {
+    position: relative;
+    height: 100%;
+    background-color: #cfd6cc;
+    overflow: hidden;
+}
+
+.auth-wordmark {
+    position: absolute;
+    left: 50%;
+    top: 15%;
+    transform: translateX(-50%);
+    max-width: min(520px, 80%);
+    height: auto;
+    z-index: 1;
+    pointer-events: none;
+}*/
+
 
 /*TODO Move css to page-/component specific file or start using tailwind?*/

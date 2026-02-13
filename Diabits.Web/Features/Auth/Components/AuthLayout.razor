@@ -1,0 +1,102 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="@AppTheme.Theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudContainer MaxWidth="MaxWidth.False" Gutters="false" Style="height: 100vh; max-height: 100vh; overflow:hidden; background-color: #cfd6cc;">
+    <MudGrid Spacing="0" Style="height: 100%">
+        <MudItem xs="7">
+            <MudStack Style="height: 100%;" Justify="Justify.FlexEnd" AlignItems="AlignItems.Start">
+                <MudPaper Elevation="0" Style="background: transparent">
+                    <LottiePlayer Path="assets/lottieAnimRed.json" Style="width:130%;height:101%;"/>
+                </MudPaper>
+            </MudStack>
+        </MudItem>
+        <MudItem xs="5">
+            <MudPaper Elevation="8" Class="rounded-l-xl" Style="height: 100%; border: 2px solid #e0e0e0;">
+                <MudStack Spacing="16" Class="mx-16 my-16" AlignItems="AlignItems.Center">
+                    <MudImage Src="assets/wordmark_red.png" Alt="Diabits wordmark" />
+                    @Body
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+
+        <!-- Background animation layer -->
+        <!-- Overlay layer -->
+        @* <MudPaper Square="true" Class="auth-overlay" Elevation="0">
+        <MudStack Class="auth-overlay-stack"
+                  AlignItems="AlignItems.Center"
+                  JustifyContent="JustifyContent.Center"
+                  Spacing="0">
+
+            <MudImage Src="assets/wordmark_red.png"
+                      Alt="Diabits"
+                      Class="auth-wordmark" />
+
+            <MudPaper Class="auth-content"
+                      Elevation="6">
+                @Body
+            </MudPaper>
+
+        </MudStack>
+    </MudPaper> *@
+
+    </MudGrid>
+</MudContainer>
+
+<style>
+    .auth-root {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+    }
+
+    /* Fullscreen background layer */
+    .auth-bg {
+        /* position: fixed; */
+        inset: 0;
+        z-index: 0;
+        background: transparent;
+    }
+
+    /* Make sure the lottie host fills the layer */
+    .auth-bg-inner {
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+    }
+
+    /* Overlay layer above background */
+    .auth-overlay {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+    }
+
+    .auth-overlay-stack {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Wordmark floating at top */
+    .auth-wordmark {
+        position: absolute;
+        top: 32px;
+        left: 50%;
+        transform: translateX(-50%);
+        max-width: min(520px, 80%);
+        pointer-events: none;
+    }
+
+    /* Body card */
+    .auth-content {
+        width: min(420px, 92vw);
+        padding: 24px;
+        border-radius: 16px;
+    }
+</style>

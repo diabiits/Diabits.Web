@@ -1,70 +1,116 @@
 ﻿@page "/login"
-@using System.ComponentModel.DataAnnotations
+@layout AuthLayout
+
 @using Diabits.Web.Features.Auth.Services
+
 @inject AuthService AuthService
 @inject NavigationManager Nav
 
-<MudForm @ref="loginForm">
-    <MudTextField T="string" Label="Username" Required="true" RequiredError="User name is required!"/>
-    <MudTextField T="string" Label="Password"  InputType="InputType.Password" Required="true" RequiredError="Password is required!" />
-    <div class="d-flex align-center justify-space-between"> 
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton> 
-    </div>
-</MudForm>
+<MudPaper Elevation="0" Class="pa-6" Style="width:min(420px, 92vw); border-radius:16px; ">
+    <MudStack Spacing="3">
 
-<main class="auth-page">
-    <section class="auth-card">
-        <header class="auth-header">
-            <h1>Diabits</h1>
-            <p>Sign in to view insights</p>
-        </header>
+        <MudStack Spacing="0" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h5">Sign in</MudText>
+        </MudStack>
 
-        @if (!string.IsNullOrEmpty(_error))
+        @if (!string.IsNullOrWhiteSpace(_error))
         {
-            <div class="auth-error">@_error</div>
+            <MudAlert Severity="Severity.Error" Dense="true" Elevation="0">
+                @_error
+            </MudAlert>
         }
 
-        <EditForm Model="_model" OnValidSubmit="SubmitAsync">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
+        <MudForm @ref="_form">
+            <MudTextField T="string"
+                          Style="background-color: #cfd6cc "
+                          @bind-Value="_model.Username"
+                          Label="Username"
+                          Variant="Variant.Outlined"
+                          Disabled="_busy"
+                          Immediate="true"
+                          Validation="ValidateUsername"
+                          OnKeyDown="HandleKeyDown" />
 
-            <label class="field">
-                <span>Username</span>
-                <InputText class="input" @bind-Value="_model.Username" />
-            </label>
+            <MudTextField T="string"
+                          Style="background-color: #cfd6cc"
+                          @bind-Value="_model.Password"
+                          Label="Password"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          Disabled="_busy"
+                          Immediate="true"
+                          Validation="ValidatePassword"
+                          OnKeyDown="HandleKeyDown" />
 
-            <label class="field">
-                <span>Password</span>
-                <InputText class="input" type="password" @bind-Value="_model.Password" />
-            </label>
+            <MudButton FullWidth="true"
+                       Class="mt-8 pa-4"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Disabled="_busy"
+                       OnClick="SubmitAsync">
+                @if (_busy)
+                {
+                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                    <MudText Typo="Typo.button">Signing in...</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.button">Sign in</MudText>
+                }
+            </MudButton>
 
-            <button type="submit" class="btn btn-primary" disabled="@_busy">Sign in</button>
-        </EditForm>
-    </section>
-</main>
+            @if (_busy)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
+                    Contacting server...
+                </MudText>
+            }
+        </MudForm>
+
+    </MudStack>
+</MudPaper>
 
 @code {
+    private MudForm? _form;
     private readonly LoginModel _model = new();
+
     private bool _busy;
     private string? _error;
 
-    MudForm loginForm;
+    private string? ValidateUsername(string value)
+        => string.IsNullOrWhiteSpace(value) ? "Username is required" : null;
+
+    private string? ValidatePassword(string value)
+        => string.IsNullOrWhiteSpace(value) ? "Password is required" : null;
 
     private async Task SubmitAsync()
     {
-        _busy = true;
+        if (_busy) return;
+
         _error = null;
 
+        if (_form is null)
+        {
+            _error = "Login form not initialized.";
+            return;
+        }
+
+        await _form.Validate();
+        if (!_form.IsValid)
+            return;
+
+        _busy = true;
         try
         {
             var result = await AuthService.LoginAsync(_model.Username, _model.Password);
+
             if (!result.Ok)
             {
-                _error = "Login failed. Check username/password.";
+                _error = "Login failed. Check username and password.";
                 return;
             }
 
-            Nav.NavigateTo("/");
+            Nav.NavigateTo("/", replace: true);
         }
         catch
         {
@@ -76,9 +122,12 @@
         }
     }
 
+    private Task HandleKeyDown(KeyboardEventArgs e)
+        => e.Key == "Enter" ? SubmitAsync() : Task.CompletedTask;
+
     private sealed class LoginModel
     {
-        [Required] public string Username { get; set; } = "";
-        [Required] public string Password { get; set; } = "";
+        public string Username { get; set; } = "";
+        public string Password { get; set; } = "";
     }
 }
