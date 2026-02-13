@@ -15,11 +15,11 @@ public class JwtAuthStateProvider(TokenStorage tokens) : AuthenticationStateProv
         if (session is null)
             return new AuthenticationState(Anonymous);
 
-        var token = TokenHandler.ReadJwtToken(session.AccessToken); 
-        if (token.ValidTo < DateTime.UtcNow) 
-        { 
-            await tokens.ClearAsync(); 
-            return new AuthenticationState(Anonymous); 
+        var token = TokenHandler.ReadJwtToken(session.AccessToken);
+        if (token.ValidTo < DateTime.UtcNow)
+        {
+            await tokens.ClearAsync();
+            return new AuthenticationState(Anonymous);
         }
 
         var claims = ParseClaims(token);
@@ -34,19 +34,15 @@ public class JwtAuthStateProvider(TokenStorage tokens) : AuthenticationStateProv
     {
         foreach (var claim in token.Claims)
         {
-            if(claim.Type == "sub")
+            yield return claim.Type switch
             {
-                yield return new Claim(ClaimTypes.NameIdentifier, claim.Value);
-                yield return claim;
-            }
-            else if (claim.Type == "role")
-            {
-                yield return new Claim(ClaimTypes.Role, claim.Value);
-            }
-            else
-            {
-                yield return claim;
-            }            
+                JwtRegisteredClaimNames.Jti => claim,
+                ClaimTypes.Name => claim,
+                ClaimTypes.Email => claim,
+                ClaimTypes.Role =>
+                claim,
+                _ => claim
+            };
         }
     }
 }

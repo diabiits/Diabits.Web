@@ -2,6 +2,7 @@ using Diabits.Web;
 using Diabits.Web.Features.Auth.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using MudBlazor;
 using MudBlazor.Services;
 
 
@@ -11,7 +12,13 @@ builder.RootComponents.Add<App>("#app");
 
 builder.Services.AddAuthorizationCore();
 
-builder.Services.AddMudServices();
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.ClearAfterNavigation = true; 
+    config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
+    config.SnackbarConfiguration.ShowCloseIcon = true;
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
+});
 
 // Auth state provider
 builder.Services.AddSingleton<JwtAuthStateProvider>();

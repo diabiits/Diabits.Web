@@ -5,47 +5,40 @@
 
 @inject AuthService AuthService
 @inject NavigationManager Nav
+@inject ISnackbar Snackbar
 
-<MudPaper Elevation="0" Class="pa-6" Style="width:min(420px, 92vw); border-radius:16px; ">
+<MudPaper Elevation="4" Class="pa-6 mt-8" Style="width: 32vw; border-radius:16px;">
+    <MudStack Class="mx-8 my-12" Spacing="2" AlignItems="AlignItems.Center">
+        <MudImage Src="assets/wordmark_red.png" Alt="Diabits wordmark" Fluid />
+        <MudText Typo="Typo.h6">
+            Connecting the Dots
+        </MudText>
+    </MudStack>
     <MudStack Spacing="3">
-
-        <MudStack Spacing="0" AlignItems="AlignItems.Center">
-            <MudText Typo="Typo.h5">Sign in</MudText>
-        </MudStack>
-
-        @if (!string.IsNullOrWhiteSpace(_error))
-        {
-            <MudAlert Severity="Severity.Error" Dense="true" Elevation="0">
-                @_error
-            </MudAlert>
-        }
-
         <MudForm @ref="_form">
             <MudTextField T="string"
-                          Style="background-color: #cfd6cc "
                           @bind-Value="_model.Username"
+                          Required="true"
+                          RequiredError="Username is required"
                           Label="Username"
-                          Variant="Variant.Outlined"
-                          Disabled="_busy"
-                          Immediate="true"
-                          Validation="ValidateUsername"
-                          OnKeyDown="HandleKeyDown" />
+                          Variant="Variant.Outlined" />
 
             <MudTextField T="string"
-                          Style="background-color: #cfd6cc"
-                          @bind-Value="_model.Password"
+                          @bind-Value="_model.Password"                      
+                          Required="true"
+                          RequiredError="Password is required"
                           Label="Password"
                           Variant="Variant.Outlined"
-                          InputType="InputType.Password"
-                          Disabled="_busy"
-                          Immediate="true"
-                          Validation="ValidatePassword"
-                          OnKeyDown="HandleKeyDown" />
+                          InputType="@(_passwordHidden ? InputType.Password : InputType.Text)"
+                          AdornmentIcon="@(_passwordHidden ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                          Adornment="Adornment.End"
+                          OnAdornmentClick="TogglePasswordVisibility"
+                          />
 
             <MudButton FullWidth="true"
                        Class="mt-8 pa-4"
                        Variant="Variant.Filled"
-                       Color="Color.Primary"
+                       Color="Color.Secondary"
                        Disabled="_busy"
                        OnClick="SubmitAsync">
                 @if (_busy)
@@ -58,42 +51,24 @@
                     <MudText Typo="Typo.button">Sign in</MudText>
                 }
             </MudButton>
-
-            @if (_busy)
-            {
-                <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
-                    Contacting server...
-                </MudText>
-            }
         </MudForm>
-
     </MudStack>
 </MudPaper>
 
 @code {
+    //TODO Refactor textinputcolor grey is also under error text
+    //TODO Shimmer button on login?
+    //TODO Sometimes the first login fails? After a fail?
     private MudForm? _form;
     private readonly LoginModel _model = new();
 
+    bool _passwordHidden = true;
+
     private bool _busy;
-    private string? _error;
-
-    private string? ValidateUsername(string value)
-        => string.IsNullOrWhiteSpace(value) ? "Username is required" : null;
-
-    private string? ValidatePassword(string value)
-        => string.IsNullOrWhiteSpace(value) ? "Password is required" : null;
 
     private async Task SubmitAsync()
     {
-        if (_busy) return;
-
-        _error = null;
-
-        if (_form is null)
-        {
-            _error = "Login form not initialized.";
-            return;
-        }
+        if (_busy || _form == null) return;
 
         await _form.Validate();
         if (!_form.IsValid)
@@ -106,7 +81,7 @@
 
             if (!result.Ok)
             {
-                _error = "Login failed. Check username and password.";
+                Snackbar.Add(result.Error ?? "Login failed.", Severity.Error);
                 return;
             }
 
@@ -114,7 +89,7 @@
         }
         catch
         {
-            _error = "Backend unavailable. Try again.";
+            Snackbar.Add("Backend unavailable. Try again.", Severity.Error);
         }
         finally
         {
@@ -122,8 +97,10 @@
         }
     }
 
-    private Task HandleKeyDown(KeyboardEventArgs e)
-        => e.Key == "Enter" ? SubmitAsync() : Task.CompletedTask;
+    void TogglePasswordVisibility() => _passwordHidden = !_passwordHidden;
+
+    //TODO Reinstante if figure out how to get it to read password value first without validating immediately. validate on submit?
+    private Task HandleKeyDown(KeyboardEventArgs e) => e.Key == "Enter" ? SubmitAsync() : Task.CompletedTask;
 
     private sealed class LoginModel
     {

@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using static System.Collections.Specialized.BitVector32;
 using static System.Net.WebRequestMethods;
 
 namespace Diabits.Web.Features.Auth.Services;
@@ -7,82 +8,75 @@ namespace Diabits.Web.Features.Auth.Services;
 public sealed class AuthApiClient
 {
     private readonly HttpClient _http;
-    private readonly TokenStorage _storage;
+    private readonly TokenStorage _tokens;
 
     public AuthApiClient(HttpClient http, TokenStorage storage)
     {
         _http = http;
-        _storage = storage;
+        _tokens = storage;
     }
 
-    public async Task<LoginResult> LoginAsync(string username, string password, CancellationToken ct = default)
+    public async Task<AuthResult> LoginAsync(string username, string password, CancellationToken ct = default)
     {
         var res = await _http.PostAsJsonAsync("Auth/login", new LoginRequest(username, password), ct);
 
         if (res.StatusCode == HttpStatusCode.BadRequest)
         {
             var msg = await res.Content.ReadAsStringAsync(ct);
-            return LoginResult.Fail(string.IsNullOrWhiteSpace(msg) ? "Invalid credentials." : msg);
+            return AuthResult.Fail(string.IsNullOrWhiteSpace(msg) ? "Invalid credentials." : msg);
         }
 
         if (!res.IsSuccessStatusCode)
-            return LoginResult.Fail("Backend unavailable.");
+            return AuthResult.Fail("Backend unavailable.");
 
         var dto = await res.Content.ReadFromJsonAsync<AuthResponse>(cancellationToken: ct);
         if (dto is null || string.IsNullOrWhiteSpace(dto.AccessToken))
-            return LoginResult.Fail("Invalid response from backend.");
+            return AuthResult.Fail("Invalid response from backend.");
 
-        await _storage.SaveAsync(new AuthSession(dto.AccessToken, dto.RefreshToken));
-        return LoginResult.Success();
+        await _tokens.SaveAsync(new AuthSession(dto.AccessToken, dto.RefreshToken));
+        return AuthResult.Success();
     }
 
     //TODO Add call to backend when implementing refresh token here
     public async Task LogoutAsync()
     {
-        await _storage.ClearAsync();
+        await _tokens.ClearAsync();
     }
 
-    public async Task<UpdateAccountResult> UpdateAccountAsync(
+    public async Task<AuthResult> UpdateAccountAsync(
         string currentPassword,
         string? newUsername = null,
         string? newPassword = null,
         CancellationToken ct = default)
     {
-        var res = await _http.PostAsJsonAsync("User/updateAccount",
+        var response = await _http.PostAsJsonAsync("User/updateAccount",
             new UpdateAccountRequest(currentPassword, newUsername, newPassword), ct);
 
-        if (res.StatusCode == HttpStatusCode.BadRequest)
+        if (!response.IsSuccessStatusCode)
         {
-            var msg = await res.Content.ReadAsStringAsync(ct);
-            return UpdateAccountResult.Fail(string.IsNullOrWhiteSpace(msg)
-                ? "Failed to update account. Check your input."
-                : msg);
+            var error = await response.Content.ReadAsStringAsync();
+            return AuthResult.Fail(error);
         }
+        var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
+        if (result?.AccessToken == null)
+            return AuthResult.Fail("Invalid response from server");
 
-        if (res.StatusCode == HttpStatusCode.Unauthorized)
-        {
-            return UpdateAccountResult.Fail("Current password is incorrect.");
-        }
+        if (!response.IsSuccessStatusCode)
+            return AuthResult.Fail("Backend unavailable.");
 
-        if (!res.IsSuccessStatusCode)
-            return UpdateAccountResult.Fail("Backend unavailable.");
+        await _tokens.SaveAsync(new AuthSession(result.AccessToken, result.RefreshToken));
 
-        return UpdateAccountResult.Success();
+        return AuthResult.Success();
     }
 
-    //TODO Move
-    private sealed record LoginRequest(string Username, string Password);
-    private sealed record UpdateAccountRequest(string CurrentPassword, string? NewUsername, string? NewPassword);
-    private sealed record AuthResponse(string AccessToken, string RefreshToken);
+    //TODO Move and refactor
+    private record LoginRequest(string Username, string Password);
+    private record UpdateAccountRequest(string CurrentPassword, string? NewUsername, string? NewPassword);
+    private record AuthResponse(string AccessToken, string RefreshToken);
 
-    public sealed record LoginResult(bool Ok, string? Error)
+    public record AuthResult(bool Ok, string? Error)
     {
-        public static LoginResult Success() => new(true, null);
-        public static LoginResult Fail(string error) => new(false, error);
-    }
-    public sealed record UpdateAccountResult(bool Ok, string? Error)
-    {
-        public static UpdateAccountResult Success() => new(true, null);
-        public static UpdateAccountResult Fail(string error) => new(false, error);
+        public static AuthResult Success() => new(true, null);
+        public static AuthResult Fail(string error) => new(false, error);
     }
 }

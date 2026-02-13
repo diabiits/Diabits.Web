@@ -1,6 +1,18 @@
+:root {
+    --primary: #AC0000;
+    --secondary: #EF88AD;
+    --ternary: #700507;
+    --charcoal: #333333;
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-soft: #fafafa;
+    --border: #e0e0e0;
+    --radius: 12px;
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    height: 100%;
+    height: 100vh;
 }
 
 body {
@@ -9,6 +21,7 @@ body {
     color: var(--charcoal);
     font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
+
 
 h1:focus {
     outline: none;
@@ -121,7 +134,7 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
-
+/*
 :root {
     --primary: #AC0000;
     --secondary: #EF88AD;
@@ -187,24 +200,6 @@ code {
         box-shadow: 0 0 0 3px rgba(239,136,173,.25);
     }
 
-.btn {
-    border: 1px solid transparent;
-    border-radius: var(--radius);
-    padding: 10px 14px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-    .btn:disabled {
-        opacity: 0.7;
-        cursor: default;
-    }
-
-.btn-primary {
-    background: var(--primary);
-    color: white;
-    box-shadow: 0 1px 2px rgba(0,0,0,.08);
-}
 
 .auth-error {
     border: 1px solid rgba(214,69,69,.35);
@@ -212,22 +207,6 @@ code {
     border-radius: 14px;
     padding: 10px 12px;
     margin: 0 0 12px;
-}
-
-.topbar {
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-}
-
-.topbar-title {
-    font-weight: 650;
-    font-size: 18px;
-    letter-spacing: 0.2px;
 }
 
 .logo {
@@ -312,24 +291,6 @@ code {
 .text-muted {
     color: #999;
     font-style: italic;
-}
-
-/*.auth-left {
-    position: relative;
-    height: 100%;
-    background-color: #cfd6cc;
-    overflow: hidden;
-}
-
-.auth-wordmark {
-    position: absolute;
-    left: 50%;
-    top: 15%;
-    transform: translateX(-50%);
-    max-width: min(520px, 80%);
-    height: auto;
-    z-index: 1;
-    pointer-events: none;
 }*/
 
 

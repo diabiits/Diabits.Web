@@ -8,13 +8,12 @@ public sealed class AuthService(
 {
     private JwtAuthStateProvider JwtProvider => (JwtAuthStateProvider)authStateProvider;
 
-    public async Task<AuthApiClient.LoginResult> LoginAsync(string username, string password, CancellationToken ct = default)
+    public async Task<AuthApiClient.AuthResult> LoginAsync(string username, string password, CancellationToken ct = default)
     {
         var result = await apiClient.LoginAsync(username, password, ct);
 
         if (result.Ok)
         {
-            // Notify Blazor's auth system that state has changed
             JwtProvider.NotifyAuthenticationStateChanged();
         }
 
@@ -26,6 +25,19 @@ public sealed class AuthService(
         await apiClient.LogoutAsync();
         JwtProvider.NotifyAuthenticationStateChanged();
     }
+
+    public async Task<AuthApiClient.AuthResult> UpdateCredentialsAsync(string currentPassword, string? newUsername, string? newPassword)
+    {
+        var result = await apiClient.UpdateAccountAsync(currentPassword, newUsername, newPassword);
+
+        if (result.Ok)
+        {
+            JwtProvider.NotifyAuthenticationStateChanged();
+        }
+
+        return result;
+    }
+
 
     public async Task<bool> IsAuthenticatedAsync()
     {
