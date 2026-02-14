@@ -22,27 +22,10 @@ public class JwtAuthStateProvider(TokenStorage tokens) : AuthenticationStateProv
             return new AuthenticationState(Anonymous);
         }
 
-        var claims = ParseClaims(token);
-        var identity = new ClaimsIdentity(claims, authenticationType: "jwt");
+        var identity = new ClaimsIdentity(token.Claims, authenticationType: "jwt");
         return new AuthenticationState(new ClaimsPrincipal(identity));
     }
 
     public void NotifyAuthenticationStateChanged() =>
-    NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-
-    private static IEnumerable<Claim> ParseClaims(JwtSecurityToken token)
-    {
-        foreach (var claim in token.Claims)
-        {
-            yield return claim.Type switch
-            {
-                JwtRegisteredClaimNames.Jti => claim,
-                ClaimTypes.Name => claim,
-                ClaimTypes.Email => claim,
-                ClaimTypes.Role =>
-                claim,
-                _ => claim
-            };
-        }
-    }
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
 }

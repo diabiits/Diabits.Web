@@ -1,47 +1,70 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
+﻿using Diabits.Web.Infrastructure.Api;
 
 namespace Diabits.Web.Features.Auth.Services;
 
-public sealed class AuthService(
-    AuthApiClient apiClient,
-    AuthenticationStateProvider authStateProvider)
+/// <summary>
+/// Handles authentication business logic and state management.
+/// </summary>
+public sealed class AuthService
 {
-    private JwtAuthStateProvider JwtProvider => (JwtAuthStateProvider)authStateProvider;
+    private readonly ApiClient _apiClient;
+    private readonly TokenStorage _tokens;
+    private readonly JwtAuthStateProvider _authProvider;
 
-    public async Task<AuthApiClient.AuthResult> LoginAsync(string username, string password, CancellationToken ct = default)
+    public AuthService(ApiClient apiClient, TokenStorage tokens, JwtAuthStateProvider authStateProvider)
     {
-        var result = await apiClient.LoginAsync(username, password, ct);
+        _apiClient = apiClient;
+        _tokens = tokens;
+        _authProvider = authStateProvider;
+    }
 
-        if (result.Ok)
-        {
-            JwtProvider.NotifyAuthenticationStateChanged();
-        }
+    public async Task<AuthResult> LoginAsync(string username, string password)
+    {
+        var result = await _apiClient.PostAsync<AuthResponse>("Auth/login", new LoginRequest(username, password));
 
-        return result;
+        if (!result.IsSuccess)
+            return AuthResult.Fail(result.Error ?? "Login failed");
+
+        await _tokens.SaveAsync(new AuthSession(result.Data!.AccessToken));
+        _authProvider.NotifyAuthenticationStateChanged();
+
+        return AuthResult.Success();
     }
 
     public async Task LogoutAsync()
     {
-        await apiClient.LogoutAsync();
-        JwtProvider.NotifyAuthenticationStateChanged();
+        await _tokens.ClearAsync();
+        _authProvider.NotifyAuthenticationStateChanged();
+        // TODO: Call backend logout endpoint when implementing refresh tokens
     }
 
-    public async Task<AuthApiClient.AuthResult> UpdateCredentialsAsync(string currentPassword, string? newUsername, string? newPassword)
+    public async Task<AuthResult> UpdateCredentialsAsync(string currentPassword, string? newUsername = null, string? newPassword = null)
     {
-        var result = await apiClient.UpdateAccountAsync(currentPassword, newUsername, newPassword);
+        var result = await _apiClient.PutAsync<AuthResponse>("Auth/UpdateCredentials", new UpdateAccountRequest(currentPassword, newUsername, newPassword));
 
-        if (result.Ok)
-        {
-            JwtProvider.NotifyAuthenticationStateChanged();
-        }
+        if (!result.IsSuccess)
+            return AuthResult.Fail(result.Error ?? "Update failed");
 
-        return result;
+        await _tokens.SaveAsync(new AuthSession(result.Data!.AccessToken));
+        _authProvider.NotifyAuthenticationStateChanged();
+
+        return AuthResult.Success();
     }
 
-
+    //TODO Implement dialog that asks user to log back in when access token expires
     public async Task<bool> IsAuthenticatedAsync()
     {
-        var state = await authStateProvider.GetAuthenticationStateAsync();
+        var state = await _authProvider.GetAuthenticationStateAsync();
         return state.User.Identity?.IsAuthenticated ?? false;
+    }
+
+    private record LoginRequest(string Username, string Password);
+    private record UpdateAccountRequest(string CurrentPassword, string? NewUsername, string? NewPassword);
+    private record AuthResponse(string AccessToken);
+
+    public record AuthResult(bool Ok, string? Error)
+    {
+        public static AuthResult Success() => new(true, null);
+        public static AuthResult Fail(string error) => new(false, error);
     }
 }

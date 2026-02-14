@@ -19,8 +19,8 @@
                 <MudText Typo="Typo.body2" Color="Color.Secondary">Manage your account information</MudText>
             </MudStack>
 
-            <MudForm @ref="_form">
-                <MudStack Spacing="3">
+            <MudForm @ref="_form" @bind-IsValid="_isValid">
+                <MudStack Spacing="2">
                     <MudTextField T="string"
                                   Value="_model.Email"
                                   Label="Email"
@@ -35,28 +35,29 @@
                                   Placeholder="@_model.CurrentUsername"
                                   Clearable
                                   ClearIcon="@Icons.Material.Filled.Undo"
+                                  HelperText="Leave blank to keep current username"
                                   OnlyValidateIfDirty
-                                  Validation="@(new Func<string, IEnumerable<string>>(PasswordStrength))" />
+                                  Validation="@(new Func<string, IEnumerable<string>>(UsernameValidator))" />
 
                     <MudTextField T="string"
                                   @bind-Value="_model.NewPassword"
                                   Label="New Password"
                                   Variant="Variant.Outlined"
                                   InputType="@(_passwordHidden ? InputType.Password : InputType.Text)"
-                                  Placeholder="Leave blank to keep current"
-                                  HelperText="Minimum 8 characters"
                                   Clearable
+                                  HelperText="Leave blank to keep current password"
                                   ClearIcon="@Icons.Material.Filled.Undo"
                                   OnlyValidateIfDirty
                                   AdornmentIcon="@(_passwordHidden ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
                                   Adornment="Adornment.End"
-                                  OnAdornmentClick="@TogglePasswordVisibility" />
+                                  OnAdornmentClick="() => _passwordHidden = !_passwordHidden"
+                                  Validation="@(new Func<string, IEnumerable<string>>(PasswordValidator))" />
 
                     <MudStack Row Spacing="2" Class="mt-4">
                         <MudButton FullWidth
                                    Variant="Variant.Filled"
                                    Color="Color.Secondary"
-                                   Disabled="@(_busy || !HasChanges)"
+                                   Disabled="@(!CanSave)"
                                    OnClick="@ShowConfirmationDialog">
                             @if (_busy)
                             {
@@ -72,7 +73,7 @@
                         <MudButton FullWidth
                                    Variant="Variant.Outlined"
                                    Color="Color.Secondary"
-                                   Disabled="_busy"
+                                   Disabled="@_busy"
                                    OnClick="@Cancel">
                             <MudText Typo="Typo.button">Cancel</MudText>
                         </MudButton>
@@ -86,86 +87,67 @@
 @code {
     private MudForm? _form;
     private readonly UpdateAccountModel _model = new();
+
     private bool _busy;
     private bool _passwordHidden = true;
+    private bool _isValid;
 
     private bool HasUsernameChange => !string.IsNullOrWhiteSpace(_model.NewUsername) && _model.NewUsername != _model.CurrentUsername;
     private bool HasPasswordChange => !string.IsNullOrWhiteSpace(_model.NewPassword);
     private bool HasChanges => HasUsernameChange || HasPasswordChange;
+    private bool CanSave => !_busy && HasChanges && _isValid;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        _model.CurrentUsername = user.FindFirst(ClaimTypes.Name)?.Value ?? "";
-        _model.Email = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
+        _model.CurrentUsername = user.FindFirst(ClaimTypes.Name)?.Value ?? String.Empty;
+        _model.Email = user.FindFirst(ClaimTypes.Email)?.Value ?? String.Empty;
     }
 
     private async Task ShowConfirmationDialog()
     {
+        if (!CanSave || _form is null)
+            return;
+
         var parameters = new DialogParameters<ConfirmPasswordDialog>
         {
-            { x => x.HasUsernameChange, !string.IsNullOrWhiteSpace(_model.NewUsername) && _model.NewUsername != _model.CurrentUsername },
-            { x => x.HasPasswordChange, !string.IsNullOrWhiteSpace(_model.NewPassword) }
+            { x => x.HasUsernameChange, HasUsernameChange },
+            { x => x.HasPasswordChange, HasPasswordChange }
         };
 
-        var dialog = await DialogService.ShowAsync<ConfirmPasswordDialog>("Confirm Changes", parameters, new DialogOptions
-        {
-            MaxWidth = MaxWidth.Small,
-            FullWidth = true,
-        });
+        var dialog = await DialogService.ShowAsync<ConfirmPasswordDialog>(
+            "Confirm Changes",
+            parameters,
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true,
+            });
 
         var result = await dialog.Result;
 
         if (result is not null && !result.Canceled && result.Data is string currentPassword)
-        {
-            await UpdateAccountAsync(currentPassword);
-        }
+            await UpdateCredentials(currentPassword);
     }
 
-    private async Task UpdateAccountAsync(string currentPassword)
+    //TODO Refactor
+    private async Task UpdateCredentials(string currentPassword)
     {
-        if (_busy || _form == null) return;
-
-        await _form.Validate();
-        if (!_form.IsValid)
-            return;
-
         _busy = true;
-        // Validate at least one change is being made
-        var hasUsernameChange = !string.IsNullOrWhiteSpace(_model.NewUsername) && _model.NewUsername != _model.CurrentUsername;
-        var hasPasswordChange = !string.IsNullOrWhiteSpace(_model.NewPassword);
+        await InvokeAsync(StateHasChanged);
 
-        if (!hasUsernameChange && !hasPasswordChange)
-        {
-            Snackbar.Add("No changes to save.", Severity.Info);
-            _busy = false;
-            return;
-        }
-
-        // Validate password if provided
-        if (hasPasswordChange && _model.NewPassword!.Length < 8)
-        {
-            Snackbar.Add("New password must be at least 8 characters.", Severity.Error);
-            _busy = false;
-            return;
-        }
-
-        // Validate username if provided
-        if (hasUsernameChange && _model.NewUsername!.Length < 3)
-        {
-            Snackbar.Add("Username must be at least 3 characters.", Severity.Error);
-            _busy = false;
-            return;
-        }
+        var newUsername = HasUsernameChange ? _model.NewUsername : null;
+        var newPassword = HasPasswordChange ? _model.NewPassword : null;
 
         try
         {
             var result = await AuthService.UpdateCredentialsAsync(
                 currentPassword,
-                hasUsernameChange ? _model.NewUsername : null,
-                hasPasswordChange ? _model.NewPassword : null);
+                HasUsernameChange ? _model.NewUsername : null,
+                HasPasswordChange ? _model.NewPassword : null
+            );
 
             if (!result.Ok)
             {
@@ -174,32 +156,40 @@
             }
 
             var changes = new List<string>();
-            if (hasUsernameChange) changes.Add("username");
-            if (hasPasswordChange) changes.Add("password");
+            if (HasUsernameChange) changes.Add("username");
+            if (HasPasswordChange) changes.Add("password");
 
-            Snackbar.Add($"Successfully updated {string.Join(" and ", changes)}!", Severity.Success);
+            Snackbar.Add($"Successfully updated {string.Join(" and ", changes)}", Severity.Success);
 
-            // Update current username if changed
-            if (hasUsernameChange && _model.NewUsername is not null)
-                _model.CurrentUsername = _model.NewUsername;
+            if (HasUsernameChange)
+                _model.CurrentUsername = _model.NewUsername!;
 
-            // Clear the form and reset state
-            _model.NewUsername = "";
-            _model.NewPassword = "";
+            _model.NewUsername = String.Empty;
+            _model.NewPassword = String.Empty;
+
+            if (_form != null)
+            {
+                _form.ResetValidation();
+                await _form.Validate();
+            }            
         }
         catch
         {
-            Snackbar.Add("Backend unavailable. Try again later.", Severity.Error);
+            Snackbar.Add("Something went wrong. Try again later.", Severity.Error);
         }
         finally
         {
             _busy = false;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
-    void TogglePasswordVisibility() => _passwordHidden = !_passwordHidden;
-    
     private void Cancel() => Nav.NavigateTo("/");
+
+    private void TogglePasswordVisibility()
+    {
+        _passwordHidden = !_passwordHidden;
+    }
 
     private sealed class UpdateAccountModel
     {
@@ -209,9 +199,9 @@
         public string? NewPassword { get; set; }
     }
 
-    private IEnumerable<string> PasswordStrength(string pw)
+    private IEnumerable<string> PasswordValidator(string pw)
     {
-        if (pw == null)
+        if (string.IsNullOrWhiteSpace(pw))
             yield break;
         if (pw.Length < 6)
             yield return "Password must be at least of length 6";
@@ -223,5 +213,17 @@
             yield return "Password must contain at least one digit";
         if (!Regex.IsMatch(pw, @"[^A-Za-z0-9]"))
             yield return "Missing special character";
+    }
+
+    private IEnumerable<string> UsernameValidator(string? username)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+            yield break;
+    
+        if (username.Length < 3)
+            yield return "Username must be at least 3 characters";
+    
+        if (username.Length > 100)
+            yield return "Username must be less than 100 characters";
     }
 }

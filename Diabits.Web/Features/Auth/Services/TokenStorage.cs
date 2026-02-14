@@ -7,12 +7,10 @@ namespace Diabits.Web.Features.Auth.Services;
 /// Manages JWT token persistence in browser's localStorage via JavaScript Interop.
 /// Saves/loads/clears authentication tokens so they survive page refreshes.
 /// </summary>
-public class TokenStorage
+public class TokenStorage(IJSRuntime js)
 {
     private const string Key = "diabits_auth";
-    private readonly IJSRuntime _js;
-
-    public TokenStorage(IJSRuntime js) => _js = js;
+    private readonly IJSRuntime _js = js;
 
     public async Task SaveAsync(AuthSession session)
     {
@@ -33,6 +31,5 @@ public class TokenStorage
         await _js.InvokeVoidAsync("localStorage.removeItem", Key);
 }
 
-//TODO Remove refreshToken? Also move
-public sealed record AuthSession(string AccessToken, string RefreshToken);
+public sealed record AuthSession(string AccessToken);
 

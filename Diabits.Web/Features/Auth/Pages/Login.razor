@@ -24,7 +24,7 @@
                           Variant="Variant.Outlined" />
 
             <MudTextField T="string"
-                          @bind-Value="_model.Password"                      
+                          @bind-Value="_model.Password"
                           Required="true"
                           RequiredError="Password is required"
                           Label="Password"
@@ -32,8 +32,8 @@
                           InputType="@(_passwordHidden ? InputType.Password : InputType.Text)"
                           AdornmentIcon="@(_passwordHidden ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
                           Adornment="Adornment.End"
-                          OnAdornmentClick="TogglePasswordVisibility"
-                          />
+                          OnAdornmentClick="() => _passwordHidden = !_passwordHidden"
+                          OnKeyDown="HandleKeyDown" />
 
             <MudButton FullWidth="true"
                        Class="mt-8 pa-4"
@@ -56,9 +56,6 @@
 </MudPaper>
 
 @code {
-    //TODO Refactor textinputcolor grey is also under error text
-    //TODO Shimmer button on login?
-    //TODO Sometimes the first login fails? After a fail?
     private MudForm? _form;
     private readonly LoginModel _model = new();
 
@@ -75,6 +72,8 @@
             return;
 
         _busy = true;
+        await InvokeAsync(StateHasChanged);
+
         try
         {
             var result = await AuthService.LoginAsync(_model.Username, _model.Password);
@@ -94,13 +93,15 @@
         finally
         {
             _busy = false;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
-    void TogglePasswordVisibility() => _passwordHidden = !_passwordHidden;
-
-    //TODO Reinstante if figure out how to get it to read password value first without validating immediately. validate on submit?
-    private Task HandleKeyDown(KeyboardEventArgs e) => e.Key == "Enter" ? SubmitAsync() : Task.CompletedTask;
+    private async void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await SubmitAsync();        
+    }
 
     private sealed class LoginModel
     {
