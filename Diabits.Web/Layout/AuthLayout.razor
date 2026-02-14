@@ -1,0 +1,17 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="@CustomTheme.DiabitsTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudMainContent Class="position-relative" Style="height: 100vh; overflow:hidden;">
+    <div style="position:absolute; bottom:-2px; left:0; z-index:0; pointer-events:none;">
+        <LottiePlayer Path="assets/lottieAnimRed.json" />
+    </div>
+    <div style="position:absolute; top:-2px; right:0; z-index:0; pointer-events:none;">
+        <LottiePlayer Path="assets/lottieAnimPink.json" Style=" width:110%;pointer-events:none;" />
+    </div>
+    <MudStack AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="position-relative" Style="z-index:1; height:100%;">
+        @Body
+    </MudStack>
+</MudMainContent>

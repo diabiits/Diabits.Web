@@ -1,0 +1,109 @@
+﻿@page "/login"
+@layout AuthLayout
+
+@using Diabits.Web.Features.Auth.Services
+
+@inject AuthService AuthService
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<MudPaper Elevation="4" Class="pa-6 mt-8" Style="width: 32vw; border-radius:16px;">
+    <MudStack Class="mx-8 my-12" Spacing="2" AlignItems="AlignItems.Center">
+        <MudImage Src="assets/wordmark_red.png" Alt="Diabits wordmark" Fluid />
+        <MudText Typo="Typo.h6">
+            Connecting the Dots
+        </MudText>
+    </MudStack>
+    <MudStack Spacing="3">
+        <MudForm @ref="_form">
+            <MudTextField T="string"
+                          @bind-Value="_model.Username"
+                          Required="true"
+                          RequiredError="Username is required"
+                          Label="Username"
+                          Variant="Variant.Outlined" />
+
+            <MudTextField T="string"
+                          @bind-Value="_model.Password"
+                          Required="true"
+                          RequiredError="Password is required"
+                          Label="Password"
+                          Variant="Variant.Outlined"
+                          InputType="@(_passwordHidden ? InputType.Password : InputType.Text)"
+                          AdornmentIcon="@(_passwordHidden ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                          Adornment="Adornment.End"
+                          OnAdornmentClick="() => _passwordHidden = !_passwordHidden"
+                          OnKeyDown="HandleKeyDown" />
+
+            <MudButton FullWidth="true"
+                       Class="mt-8 pa-4"
+                       Variant="Variant.Filled"
+                       Color="Color.Secondary"
+                       Disabled="_busy"
+                       OnClick="SubmitAsync">
+                @if (_busy)
+                {
+                    <MudProgressCircular Indeterminate="true" Size="Size.Small" Class="mr-2" />
+                    <MudText Typo="Typo.button">Signing in...</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.button">Sign in</MudText>
+                }
+            </MudButton>
+        </MudForm>
+    </MudStack>
+</MudPaper>
+
+@code {
+    private MudForm? _form;
+    private readonly LoginModel _model = new();
+
+    bool _passwordHidden = true;
+    private bool _busy;
+
+    private async Task SubmitAsync()
+    {
+        if (_busy || _form == null) return;
+
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        _busy = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            var result = await AuthService.LoginAsync(_model.Username, _model.Password);
+
+            if (!result.Ok)
+            {
+                Snackbar.Add(result.Error ?? "Login failed.", Severity.Error);
+                return;
+            }
+
+            Nav.NavigateTo("/", replace: true);
+        }
+        catch
+        {
+            Snackbar.Add("Backend unavailable. Try again.", Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await SubmitAsync();        
+    }
+
+    private class LoginModel
+    {
+        public string Username { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
+}
