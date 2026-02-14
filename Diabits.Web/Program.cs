@@ -2,13 +2,14 @@ using Diabits.Web;
 using Diabits.Web.Features.Auth.Services;
 using Diabits.Web.Infrastructure.Api;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor;
 using MudBlazor.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
-//builder.RootComponents.Add<HeadOutlet>("head::after");
+builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddAuthorizationCore();
 

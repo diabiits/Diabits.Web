@@ -31,5 +31,5 @@ public class TokenStorage(IJSRuntime js)
         await _js.InvokeVoidAsync("localStorage.removeItem", Key);
 }
 
-public sealed record AuthSession(string AccessToken);
+public record AuthSession(string AccessToken);
 

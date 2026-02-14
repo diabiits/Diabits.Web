@@ -3,9 +3,9 @@ using System.Net.Http.Json;
 namespace Diabits.Web.Infrastructure.Api;
 
 /// <summary>
-/// Generic API client that handles all HTTP communication. Automatically includes JWT tokens via AuthorizedHandler.
+/// Generic API client that handles all HTTP communication. Automatically includes JWT tokens via AuthorizationHandler.
 /// </summary>
-public sealed class ApiClient
+public class ApiClient
 {
     private readonly HttpClient _http;
 
@@ -14,9 +14,6 @@ public sealed class ApiClient
         _http = http;
     }
 
-    /// <summary>
-    /// GET request - returns result with data or error info.
-    /// </summary>
     public async Task<ApiResult<T>> GetAsync<T>(string endpoint, CancellationToken ct = default)
     {
         try
@@ -41,9 +38,6 @@ public sealed class ApiClient
         }
     }
 
-    /// <summary>
-    /// POST request - returns result with data or error info.
-    /// </summary>
     public async Task<ApiResult<TResponse>> PostAsync<TResponse>(string endpoint, object request, CancellationToken ct = default)
     {
         try
@@ -68,9 +62,6 @@ public sealed class ApiClient
         }
     }
 
-    /// <summary>
-    /// PUT request - returns result with data or error info.
-    /// </summary>
     public async Task<ApiResult<TResponse>> PutAsync<TResponse>(string endpoint, object request, CancellationToken ct = default)
     {
         try

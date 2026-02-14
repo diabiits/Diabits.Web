@@ -4,6 +4,7 @@ using System.Security.Claims;
 
 namespace Diabits.Web.Features.Auth.Services;
 
+//TODO Implement dialog that asks user to log back in when access token expires
 public class JwtAuthStateProvider(TokenStorage tokens) : AuthenticationStateProvider
 {
     private static readonly ClaimsPrincipal Anonymous = new(new ClaimsIdentity());
@@ -26,6 +27,6 @@ public class JwtAuthStateProvider(TokenStorage tokens) : AuthenticationStateProv
         return new AuthenticationState(new ClaimsPrincipal(identity));
     }
 
-    public void NotifyAuthenticationStateChanged() =>
+    public void NotifyAuthStateChanged() =>
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
 }

@@ -5,7 +5,7 @@ namespace Diabits.Web.Features.Auth.Services;
 /// <summary>
 /// Handles authentication business logic and state management.
 /// </summary>
-public sealed class AuthService
+public class AuthService
 {
     private readonly ApiClient _apiClient;
     private readonly TokenStorage _tokens;
@@ -26,7 +26,7 @@ public sealed class AuthService
             return AuthResult.Fail(result.Error ?? "Login failed");
 
         await _tokens.SaveAsync(new AuthSession(result.Data!.AccessToken));
-        _authProvider.NotifyAuthenticationStateChanged();
+        _authProvider.NotifyAuthStateChanged();
 
         return AuthResult.Success();
     }
@@ -34,7 +34,7 @@ public sealed class AuthService
     public async Task LogoutAsync()
     {
         await _tokens.ClearAsync();
-        _authProvider.NotifyAuthenticationStateChanged();
+        _authProvider.NotifyAuthStateChanged();
         // TODO: Call backend logout endpoint when implementing refresh tokens
     }
 
@@ -46,18 +46,12 @@ public sealed class AuthService
             return AuthResult.Fail(result.Error ?? "Update failed");
 
         await _tokens.SaveAsync(new AuthSession(result.Data!.AccessToken));
-        _authProvider.NotifyAuthenticationStateChanged();
+        _authProvider.NotifyAuthStateChanged();
 
         return AuthResult.Success();
     }
 
-    //TODO Implement dialog that asks user to log back in when access token expires
-    public async Task<bool> IsAuthenticatedAsync()
-    {
-        var state = await _authProvider.GetAuthenticationStateAsync();
-        return state.User.Identity?.IsAuthenticated ?? false;
-    }
-
+    //TODO Move?
     private record LoginRequest(string Username, string Password);
     private record UpdateAccountRequest(string CurrentPassword, string? NewUsername, string? NewPassword);
     private record AuthResponse(string AccessToken);

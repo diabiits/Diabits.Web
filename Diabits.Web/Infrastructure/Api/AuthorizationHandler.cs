@@ -6,7 +6,7 @@ namespace Diabits.Web.Infrastructure.Api;
 /// <summary>
 /// HTTP message handler that automatically attaches JWT bearer token to requests.
 /// </summary>
-public sealed class AuthorizationHandler(TokenStorage tokens) : DelegatingHandler
+public class AuthorizationHandler(TokenStorage tokens) : DelegatingHandler
 {
     private readonly TokenStorage _tokens = tokens;
 

@@ -42,6 +42,7 @@
                     <MudTextField T="string"
                                   @bind-Value="_model.NewPassword"
                                   Label="New Password"
+                                  ShrinkLabel
                                   Variant="Variant.Outlined"
                                   InputType="@(_passwordHidden ? InputType.Password : InputType.Text)"
                                   Clearable
@@ -86,7 +87,7 @@
 
 @code {
     private MudForm? _form;
-    private readonly UpdateAccountModel _model = new();
+    private readonly UpdateCredentialsModel _model = new();
 
     private bool _busy;
     private bool _passwordHidden = true;
@@ -190,7 +191,7 @@
         _passwordHidden = !_passwordHidden;
     }
 
-    private sealed class UpdateAccountModel
+    private class UpdateCredentialsModel
     {
         public string CurrentUsername { get; set; } = "";
         public string Email { get; set; } = "";

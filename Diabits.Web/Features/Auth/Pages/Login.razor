@@ -60,7 +60,6 @@
     private readonly LoginModel _model = new();
 
     bool _passwordHidden = true;
-
     private bool _busy;
 
     private async Task SubmitAsync()
@@ -68,8 +67,7 @@
         if (_busy || _form == null) return;
 
         await _form.Validate();
-        if (!_form.IsValid)
-            return;
+        if (!_form.IsValid) return;
 
         _busy = true;
         await InvokeAsync(StateHasChanged);
@@ -103,7 +101,7 @@
             await SubmitAsync();        
     }
 
-    private sealed class LoginModel
+    private class LoginModel
     {
         public string Username { get; set; } = "";
         public string Password { get; set; } = "";
