@@ -1,0 +1,181 @@
+﻿@page "/invites"
+@using System.ComponentModel.DataAnnotations
+@using Diabits.Web.Features.Auth.Services
+@using Diabits.Web.Features.Invites.Services
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using System.Text.RegularExpressions
+@inject InviteService InviteService
+@inject JwtAuthStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@attribute [Authorize(Roles ="Admin")]
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudPaper Elevation="4" Class="pa-6" Style="border-radius:16px;">
+        <MudStack Spacing="4">
+            <MudStack Spacing="2" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.h4">Account Settings</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Manage your account information</MudText>
+            </MudStack>
+
+            <MudForm @ref="_form" @bind-IsValid="_isValid">
+                <MudStack Spacing="2">
+                    <MudTextField T="string"
+                                  Value="_model.Email"
+                                  Label="Email"
+                                  Variant="Variant.Outlined"
+                                  Disabled
+                                  HelperText="Email cannot be changed" />
+
+                    <MudTextField T="string"
+                                  @bind-Value="_model.NewUsername"
+                                  Label="Username"
+                                  Variant="Variant.Outlined"
+                                  Placeholder="@_model.CurrentUsername"
+                                  Clearable
+                                  ClearIcon="@Icons.Material.Filled.Undo"
+                                  HelperText="Leave blank to keep current username"
+                                  OnlyValidateIfDirty
+                                  Validation="@(new Func<string, IEnumerable<string>>(UsernameValidator))" />
+
+                    <MudTextField T="string"
+                                  @bind-Value="_model.NewPassword"
+                                  Label="New Password"
+                                  ShrinkLabel
+                                  Variant="Variant.Outlined"
+                                  InputType="@(_passwordHidden ? InputType.Password : InputType.Text)"
+                                  Clearable
+                                  HelperText="Leave blank to keep current password"
+                                  ClearIcon="@Icons.Material.Filled.Undo"
+                                  OnlyValidateIfDirty
+                                  AdornmentIcon="@(_passwordHidden ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                                  Adornment="Adornment.End"
+                                  OnAdornmentClick="() => _passwordHidden = !_passwordHidden"
+                                  Validation="@(new Func<string, IEnumerable<string>>(PasswordValidator))" />
+
+                    <MudStack Row Spacing="2" Class="mt-4">
+                        <MudButton FullWidth
+                                   Variant="Variant.Filled"
+                                   Color="Color.Secondary"
+                                   Disabled="@(!CanSave)"
+                                   OnClick="@ShowConfirmationDialog">
+                            @if (_busy)
+                            {
+                                <MudProgressCircular Indeterminate Size="Size.Small" Class="mr-2" />
+                                <MudText Typo="Typo.button">Updating...</MudText>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.button">Save Changes</MudText>
+                            }
+                        </MudButton>
+
+                        <MudButton FullWidth
+                                   Variant="Variant.Outlined"
+                                   Color="Color.Secondary"
+                                   Disabled="@_busy"
+                                   OnClick="@Cancel">
+                            <MudText Typo="Typo.button">Cancel</MudText>
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudForm>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private MudForm? _form;
+    private readonly UpdateCredentialsModel _model = new();
+
+    private bool _busy;
+    private bool _passwordHidden = true;
+    private bool _isValid;
+
+    private bool HasUsernameChange => !string.IsNullOrWhiteSpace(_model.NewUsername) && _model.NewUsername != _model.CurrentUsername;
+    private bool HasPasswordChange => !string.IsNullOrWhiteSpace(_model.NewPassword);
+    private bool HasChanges => HasUsernameChange || HasPasswordChange;
+    private bool CanSave => !_busy && HasChanges && _isValid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        _model.CurrentUsername = user.FindFirst(ClaimTypes.Name)?.Value ?? String.Empty;
+        _model.Email = user.FindFirst(ClaimTypes.Email)?.Value ?? String.Empty;
+    }
+
+    private async Task ShowConfirmationDialog()
+    {
+        if (!CanSave || _form is null)
+            return;
+
+        var parameters = new DialogParameters<ConfirmPasswordDialog>
+        {
+            { x => x.HasUsernameChange, HasUsernameChange },
+            { x => x.HasPasswordChange, HasPasswordChange }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmPasswordDialog>(
+            "Confirm Changes",
+            parameters,
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true,
+            });
+
+        var result = await dialog.Result;
+
+        //if (result is not null && !result.Canceled && result.Data is string currentPassword)
+           // await UpdateCredentials(currentPassword);
+    }
+
+   
+
+    private void Cancel() => Nav.NavigateTo("/");
+
+    private void TogglePasswordVisibility()
+    {
+        _passwordHidden = !_passwordHidden;
+    }
+
+    private class UpdateCredentialsModel
+    {
+        public string CurrentUsername { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string? NewUsername { get; set; }
+        public string? NewPassword { get; set; }
+    }
+
+    private IEnumerable<string> PasswordValidator(string pw)
+    {
+        if (string.IsNullOrWhiteSpace(pw))
+            yield break;
+        if (pw.Length < 6)
+            yield return "Password must be at least of length 6";
+        if (!Regex.IsMatch(pw, @"[A-Z]"))
+            yield return "Password must contain at least one capital letter";
+        if (!Regex.IsMatch(pw, @"[a-z]"))
+            yield return "Password must contain at least one lowercase letter";
+        if (!Regex.IsMatch(pw, @"[0-9]"))
+            yield return "Password must contain at least one digit";
+        if (!Regex.IsMatch(pw, @"[^A-Za-z0-9]"))
+            yield return "Missing special character";
+    }
+
+    private IEnumerable<string> UsernameValidator(string? username)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+            yield break;
+    
+        if (username.Length < 3)
+            yield return "Username must be at least 3 characters";
+    
+        if (username.Length > 100)
+            yield return "Username must be less than 100 characters";
+    }
+}
