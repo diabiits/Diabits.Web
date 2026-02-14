@@ -1,6 +1,6 @@
 ﻿using MudBlazor;
 
-namespace Diabits.Web.Layout;
+namespace Diabits.Web.Shared;
 
 public static class CustomTheme
 {
