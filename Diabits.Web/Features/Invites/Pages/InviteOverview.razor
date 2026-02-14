@@ -1,0 +1,132 @@
+﻿@page "/invites"
+@using System.ComponentModel.DataAnnotations
+@using Diabits.Web.Features.Auth.Services
+@using Diabits.Web.Features.Invites.Services
+@using Microsoft.AspNetCore.Authorization
+@using System.Text.RegularExpressions
+@inject InviteService InviteService
+@inject JwtAuthStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@attribute [Authorize(Roles = "Admin")]
+
+<MudContainer MaxWidth="MaxWidth.False" Class="mt-16">
+    <MudTable Items="@Invites">
+        <HeaderContent>
+            <MudTh>Email</MudTh>
+            <MudTh>Invite Code</MudTh>
+            <MudTh>Created At</MudTh>
+            <MudTh>Used By</MudTh>
+            <MudTh>Used At</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Email">@context.Email</MudTd>
+            <MudTd>@context.Code</MudTd>
+            <MudTd>@context.CreatedAt</MudTd>
+            <MudTd>@context.UsedBy</MudTd>
+            <MudTd>@context.UsedAt</MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small"
+                           Variant="Variant.Filled"
+                           OnClick="@(() => SendInvite(context.Email, context.Code))">
+                    Send Invite
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudContainer>
+
+@code {
+    private MudForm? _form;
+    private IEnumerable<Invite> Invites = new List<Invite>
+    {
+        new()
+        {
+            Email = "rlavall0@google.ru",
+            Code = "4215ddf5-750d-4665-b611-120d7bbfad77",
+            CreatedAt = new DateTime(2025, 11, 07, 12, 20, 07)
+        },
+        new()
+        {
+            Email = "dwarner1@bluehost.com",
+            Code = "a3c3b6f0-98ad-4156-922c-f2cc3ac440a4",
+            CreatedAt = new DateTime(2025, 11, 04, 11, 36, 23),
+            UsedBy = "maria87",
+            UsedAt = new DateTime(2025, 11, 05, 09, 14, 10)
+        },
+        new()
+    {
+        Email = "gtunnadine2@sitemeter.com",
+        Code = "35ad6cb0-0038-4325-b24a-47bd459b6b79",
+        CreatedAt = new DateTime(2025, 10, 25, 16, 21, 38)
+    },
+    new()
+    {
+        Email = "thawking3@dagondesign.com",
+        Code = "f5264107-80a2-4bdf-aa5a-53e52a7bbdcf",
+        CreatedAt = new DateTime(2025, 05, 24, 03, 31, 10),
+        UsedBy = "dev_alex",
+        UsedAt = new DateTime(2025, 05, 24, 10, 02, 44)
+    },
+    new()
+    {
+        Email = "dwinram4@mozilla.com",
+        Code = "9dd97b5b-f655-4f7d-8c63-7b5fc4aeb30c",
+        CreatedAt = new DateTime(2025, 03, 02, 19, 15, 38)
+    },
+    new()
+    {
+        Email = "qfranz5@amazon.co.uk",
+        Code = "e8f04ce9-1205-464a-8000-75c4b758feeb",
+        CreatedAt = new DateTime(2025, 10, 21, 02, 44, 14),
+        UsedBy = "lucas_admin",
+        UsedAt = new DateTime(2025, 10, 22, 08, 33, 19)
+    },
+    new()
+    {
+        Email = "rchapelhow6@prweb.com",
+        Code = "f1223e71-b97b-4340-8889-2ffc874b591a",
+        CreatedAt = new DateTime(2025, 06, 11, 09, 53, 09)
+    },
+    new()
+    {
+        Email = "egoodreid7@smh.com.au",
+        Code = "dfc44e82-d6bf-4f9d-aae5-1f8e3523abf7",
+        CreatedAt = new DateTime(2025, 06, 18, 04, 51, 24),
+        UsedBy = "nina.k",
+        UsedAt = new DateTime(2025, 06, 19, 13, 05, 51)
+    },
+    new()
+    {
+        Email = "jhamil8@discuz.net",
+        Code = "7fbd3331-7212-4c71-8669-bfb3b38017bf",
+        CreatedAt = new DateTime(2025, 06, 04, 11, 11, 27)
+        },
+        new()
+        {
+            Email = "bkernoghan9@ask.com",
+            Code = "41047df4-3521-43b0-b2ae-b4740383c159",
+            CreatedAt = new DateTime(2025, 09, 23, 03, 10, 12),
+            UsedBy = "admin_test",
+            UsedAt = new DateTime(2025, 09, 24, 15, 47, 03)
+        }
+    };
+
+    private void SendInvite(string email, string code)
+    {
+        Console.WriteLine($"Email: {email}, Code: {code}");
+
+        // Later:
+        // await EmailService.SendInviteAsync(email, code);
+    }
+
+    private class Invite
+    {
+        public string Email { get; set; } = "";
+        public string Code { get; set; } = "";
+        public DateTime CreatedAt { get; set; }
+        public string? UsedBy { get; set; }
+        public DateTime? UsedAt { get; set; }
+    }
+}

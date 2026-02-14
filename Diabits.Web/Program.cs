@@ -1,5 +1,6 @@
 using Diabits.Web;
 using Diabits.Web.Features.Auth.Services;
+using Diabits.Web.Features.Invites.Services;
 using Diabits.Web.Infrastructure.Api;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -25,6 +26,7 @@ builder.Services.AddSingleton<JwtAuthStateProvider>();
 builder.Services.AddSingleton<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthStateProvider>());
 builder.Services.AddSingleton<TokenStorage>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<InviteService>();
 
 builder.Services.AddScoped<AuthorizationHandler>();
 builder.Services.AddHttpClient<ApiClient>(client =>
