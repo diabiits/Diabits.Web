@@ -1,14 +1,13 @@
 ﻿@page "/settings"
-@using System.ComponentModel.DataAnnotations
-@using Diabits.Web.Features.Auth.Services
 @using Microsoft.AspNetCore.Authorization
 @using System.Security.Claims
 @using System.Text.RegularExpressions
-@inject AuthService AuthService
 @inject JwtAuthStateProvider AuthStateProvider
-@inject NavigationManager Nav
-@inject ISnackbar Snackbar
+@inject AuthService AuthService
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+
 @attribute [Authorize]
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
@@ -96,15 +95,15 @@
     private bool HasUsernameChange => !string.IsNullOrWhiteSpace(_model.NewUsername) && _model.NewUsername != _model.CurrentUsername;
     private bool HasPasswordChange => !string.IsNullOrWhiteSpace(_model.NewPassword);
     private bool HasChanges => HasUsernameChange || HasPasswordChange;
-    private bool CanSave => !_busy && HasChanges && _isValid;
+    private bool CanSave => !_busy && _isValid && HasChanges;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        _model.CurrentUsername = user.FindFirst(ClaimTypes.Name)?.Value ?? String.Empty;
-        _model.Email = user.FindFirst(ClaimTypes.Email)?.Value ?? String.Empty;
+        _model.CurrentUsername = user.FindFirst(ClaimTypes.Name)?.Value ?? "";
+        _model.Email = user.FindFirst(ClaimTypes.Email)?.Value ?? "";
     }
 
     private async Task ShowConfirmationDialog()
@@ -129,7 +128,7 @@
 
         var result = await dialog.Result;
 
-        if (result is not null && !result.Canceled && result.Data is string currentPassword)
+        if (result != null && !result.Canceled && result.Data is string currentPassword)
             await UpdateCredentials(currentPassword);
     }
 
@@ -164,8 +163,8 @@
             if (HasUsernameChange)
                 _model.CurrentUsername = _model.NewUsername!;
 
-            _model.NewUsername = String.Empty;
-            _model.NewPassword = String.Empty;
+            _model.NewUsername = "";
+            _model.NewPassword = "";
 
             if (_form != null)
             {
@@ -184,20 +183,7 @@
         }
     }
 
-    private void Cancel() => Nav.NavigateTo("/");
-
-    private void TogglePasswordVisibility()
-    {
-        _passwordHidden = !_passwordHidden;
-    }
-
-    private class UpdateCredentialsModel
-    {
-        public string CurrentUsername { get; set; } = "";
-        public string Email { get; set; } = "";
-        public string? NewUsername { get; set; }
-        public string? NewPassword { get; set; }
-    }
+    private async Task Cancel() => await JSRuntime.InvokeVoidAsync("history.back");
 
     private IEnumerable<string> PasswordValidator(string pw)
     {
@@ -225,5 +211,13 @@
     
         if (username.Length > 100)
             yield return "Username must be less than 100 characters";
+    }
+
+    private class UpdateCredentialsModel
+    {
+        public string CurrentUsername { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string? NewUsername { get; set; }
+        public string? NewPassword { get; set; }
     }
 }

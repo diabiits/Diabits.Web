@@ -1,9 +1,12 @@
 using Diabits.Web;
-using Diabits.Web.Features.Auth.Services;
 using Diabits.Web.Infrastructure.Api;
+using Diabits.Web.Services.Auth;
+using Diabits.Web.Services.Invites;
+
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+
 using MudBlazor;
 using MudBlazor.Services;
 
@@ -25,6 +28,7 @@ builder.Services.AddSingleton<JwtAuthStateProvider>();
 builder.Services.AddSingleton<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthStateProvider>());
 builder.Services.AddSingleton<TokenStorage>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<InviteService>();
 
 builder.Services.AddScoped<AuthorizationHandler>();
 builder.Services.AddHttpClient<ApiClient>(client =>

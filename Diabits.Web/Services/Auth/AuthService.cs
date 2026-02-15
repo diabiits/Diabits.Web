@@ -1,6 +1,7 @@
-﻿using Diabits.Web.Infrastructure.Api;
+﻿using Diabits.Web.DTOs;
+using Diabits.Web.Infrastructure.Api;
 
-namespace Diabits.Web.Features.Auth.Services;
+namespace Diabits.Web.Services.Auth;
 
 /// <summary>
 /// Handles authentication business logic and state management.
@@ -25,7 +26,10 @@ public class AuthService
         if (!result.IsSuccess)
             return AuthResult.Fail(result.Error ?? "Login failed");
 
-        await _tokens.SaveAsync(new AuthSession(result.Data!.AccessToken));
+        if (result.Data?.AccessToken == null)
+            return AuthResult.Fail("Invalid response from server");
+
+        await _tokens.SaveAsync(new AuthSession(result.Data.AccessToken));
         _authProvider.NotifyAuthStateChanged();
 
         return AuthResult.Success();
@@ -45,17 +49,16 @@ public class AuthService
         if (!result.IsSuccess)
             return AuthResult.Fail(result.Error ?? "Update failed");
 
-        await _tokens.SaveAsync(new AuthSession(result.Data!.AccessToken));
+        if (result.Data?.AccessToken == null)
+            return AuthResult.Fail("Invalid response from server");
+
+        await _tokens.SaveAsync(new AuthSession(result.Data.AccessToken));
         _authProvider.NotifyAuthStateChanged();
 
         return AuthResult.Success();
     }
 
     //TODO Move?
-    private record LoginRequest(string Username, string Password);
-    private record UpdateAccountRequest(string CurrentPassword, string? NewUsername, string? NewPassword);
-    private record AuthResponse(string AccessToken);
-
     public record AuthResult(bool Ok, string? Error)
     {
         public static AuthResult Success() => new(true, null);

@@ -1,0 +1,59 @@
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudTextField Label="Email"
+                          Value="@Email"
+                          ReadOnly="true"
+                          Variant="Variant.Outlined" />
+
+            <MudTextField Label="Invite Message"
+                          Value="@InviteMessage"
+                          ReadOnly="true"
+                          Lines="15"
+                          Variant="Variant.Outlined" />
+
+            <MudText Typo="Typo.caption" Color="Color.Info">
+                Copy the message above and send it to the user via your preferred method.
+            </MudText>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="CopyToClipboard" Color="Color.Secondary" Variant="Variant.Filled">
+            Copy Message
+        </MudButton>
+        <MudButton Color="Color.Secondary" OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance? MudDialog { get; set; }
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Parameter] public string Email { get; set; } = string.Empty;
+    [Parameter] public string InviteCode { get; set; } = string.Empty;
+
+    private string InviteMessage => $@"Hello,
+
+You've been invited to join Diabits, a diabetes management application!
+
+To get started:
+1. Visit the Diabits app to create an account
+2. IMPORTANT: Use this email address ({Email}) when signing up
+3. Enter your invite code: {InviteCode}
+
+Learn more about the project: https://github.com/diabiits
+
+We're excited to have you on board!
+
+Best regards,
+The Diabits Team";
+
+    private async Task CopyToClipboard()
+    {
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", InviteMessage);
+        Snackbar.Add("Message copied to clipboard!", Severity.Success);
+    }
+
+    private void Close() => MudDialog?.Close();
+}

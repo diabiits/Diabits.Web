@@ -1,7 +1,8 @@
 ﻿using System.Text.Json;
+
 using Microsoft.JSInterop;
 
-namespace Diabits.Web.Features.Auth.Services;
+namespace Diabits.Web.Services.Auth;
 
 /// <summary>
 /// Manages JWT token persistence in browser's localStorage via JavaScript Interop.
@@ -31,5 +32,5 @@ public class TokenStorage(IJSRuntime js)
         await _js.InvokeVoidAsync("localStorage.removeItem", Key);
 }
 
+//TODO Move?
 public record AuthSession(string AccessToken);
-
