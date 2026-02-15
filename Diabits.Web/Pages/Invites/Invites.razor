@@ -1,0 +1,127 @@
+﻿@page "/invites"
+@using System.Collections.ObjectModel
+@using Diabits.Web.Models
+@using Microsoft.AspNetCore.Authorization
+
+@inject InviteService InviteService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+@attribute [Authorize(Roles = "Admin")]
+
+<MudContainer MaxWidth="MaxWidth.False" Class="my-4">
+    <MudDataGrid Items="@InviteList" 
+                 Filterable 
+                 FilterMode="DataGridFilterMode.ColumnFilterMenu" 
+                 ColumnResizeMode="ResizeMode.Column"
+                 Loading="@_isLoading" 
+                 LoadingProgressColor="Color.Tertiary" 
+                 Hover 
+                 Striped 
+                 Elevation="4">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Invites</MudText>
+            <MudSpacer />
+            <MudButtonGroup Class="mr-2" Color="Color.Secondary" Variant="Variant.Filled">
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="LoadInvites">
+                    Refresh
+                </MudIconButton>
+                <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Ripple OnClick="ShowCreateInviteDialog">
+                    Create New Invite
+                </MudButton>
+            </MudButtonGroup>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Email" HeaderStyle="width:23%;" />
+            <PropertyColumn Property="x => x.Code" Title="Invite Code" HeaderStyle="width:20%;" />
+            <PropertyColumn Property="x => x.CreatedAt" Title="Created At" HeaderStyle="width:15%;" InitialDirection="SortDirection.Descending" />
+            <PropertyColumn Property="x => x.UsedBy" Title="Used By" HeaderStyle="width:15%;" />
+            <PropertyColumn Property="x => x.UsedAt" Title="Used At" HeaderStyle="width:15%;" />
+            <TemplateColumn HeaderStyle="width:12%;">
+                <CellTemplate>
+                    <MudButton Size="Size.Small"
+                               Variant="Variant.Filled"
+                               Disabled="@(context.Item.UsedAt != null)"
+                               Color="Color.Secondary"
+                               OnClick="@(() => ShowInviteMessageDialog(context.Item.Email, context.Item.Code))">
+                        Generate Message
+                    </MudButton>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="Invite" />
+        </PagerContent>
+    </MudDataGrid>
+</MudContainer>
+
+@code {
+    private bool _isLoading = true;
+    private ObservableCollection<Invite> InviteList = new ();
+
+    protected override async Task OnInitializedAsync() => await LoadInvites();
+
+    private async Task LoadInvites()
+    {
+        _isLoading = true;
+        try
+        {
+            var invites = await InviteService.GetInvitesAsync();
+            InviteList = new ObservableCollection<Invite>(invites);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task ShowCreateInviteDialog()
+    {
+        var existingEmails = InviteList.Select(i => i.Email).ToHashSet();
+
+        var parameters = new DialogParameters<CreateInviteDialog>
+        {
+            { x => x.ExistingEmails, existingEmails }
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateInviteDialog>(
+            "Create New Invite",
+            parameters,
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.Small,
+                FullWidth = true,
+            }
+        );
+
+        var result = await dialog.Result;
+
+        if (result?.Canceled != false) return;
+
+        if (result.Data is Invite newInvite)
+            InviteList.Add(newInvite);
+    }
+
+    private async Task ShowInviteMessageDialog(string email, string code)
+    {
+        var parameters = new DialogParameters<InviteMessageDialog>
+        {
+            { x => x.Email, email },
+            { x => x.InviteCode, code }
+        };
+
+        await DialogService.ShowAsync<InviteMessageDialog>(
+            "",
+            parameters,
+            new DialogOptions
+            {
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+            }
+        );
+    }
+}

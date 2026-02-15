@@ -27,9 +27,6 @@ public class ApiClient
             }
 
             var data = await response.Content.ReadFromJsonAsync<T>(ct);
-            if (data is null)
-                return ApiResult<T>.Failure("Invalid response from server");
-
             return ApiResult<T>.Success(data);
         }
         catch (HttpRequestException)
@@ -51,9 +48,6 @@ public class ApiClient
             }
 
             var data = await response.Content.ReadFromJsonAsync<TResponse>(ct);
-            if (data is null)
-                return ApiResult<TResponse>.Failure("Invalid response from server");
-
             return ApiResult<TResponse>.Success(data);
         }
         catch (HttpRequestException)
@@ -75,9 +69,6 @@ public class ApiClient
             }
 
             var data = await response.Content.ReadFromJsonAsync<TResponse>(ct);
-            if (data is null)
-                return ApiResult<TResponse>.Failure("Invalid response from server");
-
             return ApiResult<TResponse>.Success(data);
         }
         catch (HttpRequestException)

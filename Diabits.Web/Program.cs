@@ -1,10 +1,12 @@
 using Diabits.Web;
-using Diabits.Web.Features.Auth.Services;
-using Diabits.Web.Features.Invites.Services;
 using Diabits.Web.Infrastructure.Api;
+using Diabits.Web.Services.Auth;
+using Diabits.Web.Services.Invites;
+
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+
 using MudBlazor;
 using MudBlazor.Services;
 

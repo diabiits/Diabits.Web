@@ -1,11 +1,11 @@
 ﻿@page "/login"
 @layout AuthLayout
 
-@using Diabits.Web.Features.Auth.Services
-
+@using Microsoft.AspNetCore.Components.Authorization
 @inject AuthService AuthService
 @inject NavigationManager Nav
 @inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
 
 <MudPaper Elevation="4" Class="pa-6 mt-8" Style="width: 32vw; border-radius:16px;">
     <MudStack Class="mx-8 my-12" Spacing="2" AlignItems="AlignItems.Center">
@@ -54,6 +54,7 @@
         </MudForm>
     </MudStack>
 </MudPaper>
+}
 
 @code {
     private MudForm? _form;
@@ -61,6 +62,15 @@
 
     bool _passwordHidden = true;
     private bool _busy;
+    private bool _isAuthChecked;
+    private bool _isAuthenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _isAuthenticated = authState.User.Identity?.IsAuthenticated == true;
+        _isAuthChecked = true;
+    }
 
     private async Task SubmitAsync()
     {

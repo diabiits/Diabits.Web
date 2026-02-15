@@ -1,0 +1,98 @@
+﻿@using System.Text.RegularExpressions
+@inject InviteService InviteService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_isValid">
+            <MudStack Spacing="2">
+                <MudTextField T="string"
+                              Label="Email"
+                              @bind-Value="_email"
+                              Variant="Variant.Outlined"
+                              Required="true"
+                              RequiredError="Email is required"
+                              Validation="@(new Func<string, IEnumerable<string>>(EmailValidator))"
+                              DebounceInterval="400" />
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@CreateInvite"
+                   Color="Color.Secondary"
+                   Variant="Variant.Filled"
+                   Disabled="@(_busy || !_isValid)">
+            @if (_busy)
+            {
+                <MudProgressCircular Indeterminate Size="Size.Small" Class="mr-2" />
+                <MudText Class="ms-2">Creating...</MudText>
+            }
+            else
+            {
+                <MudText>Create Invite</MudText>
+            }
+        </MudButton>
+        <MudButton Color="Color.Secondary" Variant="Variant.Outlined" OnClick="Cancel" Disabled="@_busy">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public HashSet<string> ExistingEmails { get; set; } = new();
+
+    private static readonly Regex EmailRegex =
+        new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
+
+    private MudForm? _form;
+    private string? _email;
+    private bool _busy;
+    private bool _isValid;
+
+    private async Task CreateInvite()
+    {
+        if (_form is null) return;
+
+        await _form.Validate();
+        if (!_isValid) return;
+
+        try
+        {
+            _busy = true;
+            var invite = await InviteService.CreateInviteAsync(_email!);
+
+            Snackbar.Add($"Invite created for {_email}", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(invite));
+        }
+        catch (HttpRequestException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private IEnumerable<string> EmailValidator(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            yield break;
+        }
+
+        if (!EmailRegex.IsMatch(email))
+        {
+            yield return "Invalid email format";
+        }
+
+        if (ExistingEmails.Contains(email))
+        {
+            yield return "Email already has an invite";
+        }
+    }
+}

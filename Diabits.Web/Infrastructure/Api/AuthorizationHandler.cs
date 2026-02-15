@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
-using Diabits.Web.Features.Auth.Services;
+
+using Diabits.Web.Services.Auth;
 
 namespace Diabits.Web.Infrastructure.Api;
 

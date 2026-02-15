@@ -1,6 +1,6 @@
 ﻿using MudBlazor;
 
-namespace Diabits.Web.Shared;
+namespace Diabits.Web.Layout;
 
 public static class CustomTheme
 {
@@ -36,7 +36,7 @@ public static class CustomTheme
             HoverOpacity = 0.06,
             Surface = "rgba(255,255,255,1)",
             Background = "rgba(255,255,255,1)",
-            Info = "rgba(33,150,243,1)",
+            Info = "#2b7bb6ff",
             Dark = "rgba(66,66,66,1)",
             BackgroundGray = "rgba(245,245,245,1)",
             DrawerBackground = "rgba(255,255,255,1)",
@@ -57,13 +57,13 @@ public static class CustomTheme
             TableLines = "rgba(224,224,224,1)",
             DividerLight = "rgba(0,0,0,0.8)",
             Warning = "rgba(255,152,0,1)",
-            Error = "rgba(244,67,54,1)",
+            Error = "#f44336ff",
             ActionDefault = "rgba(0,0,0,0.5372549019607843)",
             Primary = "#555555ff",
-            Success = "rgba(0,200,83,1)",
-            InfoLighten = "rgb(71,167,245)",
+            Success = "#228c50ff",
+            InfoLighten = "#619eccff",
             PrimaryDarken = "#2b2b2bff",
-            SuccessDarken = "rgb(0,163,68)",
+            SuccessDarken = "#095f2eff",
             DarkLighten = "rgb(87,87,87)",
             WarningLighten = "rgb(255,167,36)",
             ErrorLighten = "rgb(246,96,85)",
@@ -71,8 +71,8 @@ public static class CustomTheme
             DarkDarken = "rgb(46,46,46)",
             WarningDarken = "rgb(214,129,0)",
             PrimaryLighten = "#9e9b9bff",
-            SuccessLighten = "rgb(0,235,98)",
-            InfoDarken = "rgb(12,128,223)",
+            SuccessLighten = "#49aa70ff",
+            InfoDarken = "#104e80ff",
         },
         PaletteDark = new PaletteDark()
         {

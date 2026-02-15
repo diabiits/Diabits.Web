@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
+
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace Diabits.Web.Features.Auth.Services;
+namespace Diabits.Web.Services.Auth;
 
 //TODO Implement dialog that asks user to log back in when access token expires
 public class JwtAuthStateProvider(TokenStorage tokens) : AuthenticationStateProvider
