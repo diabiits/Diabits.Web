@@ -41,8 +41,7 @@
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        _isAdmin = user.IsInRole("Admin");
+        _isAdmin = authState.User.IsInRole("Admin");
     }
 
     private async Task LogoutAsync()
