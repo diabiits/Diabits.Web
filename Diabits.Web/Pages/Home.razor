@@ -1,9 +1,466 @@
 ﻿@page "/"
 @attribute [Authorize]
+@using ApexCharts
 @using Microsoft.AspNetCore.Authorization
+@using Diabits.Web.Services.HealthData
+@inject HealthDataService HealthDataService
+@inject ISnackbar Snackbar
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" GutterBottom="true">Health Dashboard</MudText>
+    <MudText Typo="Typo.body2" Class="mb-4">Data through @_endDate.ToString("MMM dd, yyyy")</MudText>
 
-Welcome to your new app.
+    @if (_isLoading)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else if (_dataLoaded)
+    {
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+            <MudTabPanel Text="Blood Sugar">
+                <MudGrid>
+                    <MudItem xs="12" md="3">
+                        <MudPaper Elevation="2" Class="pa-4">
+                            <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Average</MudText>
+                            <MudText Typo="Typo.h5">@_glucoseStats.Average.ToString("F1")</MudText>
+                            <MudText Typo="Typo.caption">mmol/L</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudPaper Elevation="2" Class="pa-4">
+                            <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Minimum</MudText>
+                            <MudText Typo="Typo.h5">@_glucoseStats.Min.ToString("F1")</MudText>
+                            <MudText Typo="Typo.caption">mmol/L</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudPaper Elevation="2" Class="pa-4">
+                            <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Maximum</MudText>
+                            <MudText Typo="Typo.h5">@_glucoseStats.Max.ToString("F1")</MudText>
+                            <MudText Typo="Typo.caption">mmol/L</MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" md="3">
+                        <MudPaper Elevation="2" Class="pa-4">
+                            <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Readings</MudText>
+                            <MudText Typo="Typo.h5">@_glucoseStats.Count</MudText>
+                            <MudText Typo="Typo.caption">last 7 days</MudText>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="4" Class="mt-4">
+                        <MudPaper Elevation="2" Class="pa-4">
+                            <MudText Typo="Typo.h6" Class="mb-3">Time in Ranges</MudText>
+                            <MudGrid>
+                                <MudItem xs="4" md="3" Class="d-flex justify-center align-center">
+                                    <ApexChart TItem="RangePercentageData"
+                                               Height="300"
+                                               Options="_rangeChartOptions">
+
+                                        <ApexPointSeries TItem="RangePercentageData"
+                                                         Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.VeryHigh)"
+                                                         Name="Very High (≥13.9)"
+                                                         SeriesType="SeriesType.Bar"
+                                                         XValue="x => x.Category"
+                                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)"
+                                                         Color="#FC4300" />
+
+                                        <ApexPointSeries TItem="RangePercentageData"
+                                                         Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.High)"
+                                                         Name="High (10.0-13.8)"
+                                                         SeriesType="SeriesType.Bar"
+                                                         XValue="x => x.Category"
+                                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)"
+                                                         Color="#FF9100" />
+
+                                        <ApexPointSeries TItem="RangePercentageData"
+                                                         Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.InRange)"
+                                                         Name="In Range (4.0-9.9)"
+                                                         SeriesType="SeriesType.Bar"
+                                                         XValue="x => x.Category"
+                                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)"
+                                                         Color="#097B22" />
+
+                                        <ApexPointSeries TItem="RangePercentageData"
+                                                         Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.Low)"
+                                                         Name="Low (3.1-3.9)"
+                                                         SeriesType="SeriesType.Bar"
+                                                         XValue="x => x.Category"
+                                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)"
+                                                         Color="#EB4E4E" />
+
+                                        <ApexPointSeries TItem="RangePercentageData"
+                                                         Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.VeryLow)"
+                                                         Name="Very Low (≤3.0)"
+                                                         SeriesType="SeriesType.Bar"
+                                                         XValue="x => x.Category"
+                                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)"
+                                                         Color="#DD0000" />
+
+                                    </ApexChart>
+                                </MudItem>
+                                <MudItem xs="4" md="9">
+                                    <MudGrid>
+                                        <MudItem xs="6" sm="4" md="12">
+                                            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Error">Very High (≥13.9)</MudText>
+                                            <MudText Typo="Typo.h6">@_glucoseRangePercentages.VeryHigh.ToString("F1")%</MudText>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="4" md="12">
+                                            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Warning">High (10.0-13.8)</MudText>
+                                            <MudText Typo="Typo.h6">@_glucoseRangePercentages.High.ToString("F1")%</MudText>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="4" md="12">
+                                            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Success">In Range (4.0-9.9)</MudText>
+                                            <MudText Typo="Typo.h6">@_glucoseRangePercentages.InRange.ToString("F1")%</MudText>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="4" md="12">
+                                            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Warning">Low (3.1-3.9)</MudText>
+                                            <MudText Typo="Typo.h6">@_glucoseRangePercentages.Low.ToString("F1")%</MudText>
+                                        </MudItem>
+                                        <MudItem xs="6" sm="4" md="12">
+                                            <MudText Typo="Typo.caption" Color="MudBlazor.Color.Error">Very Low (≤3.0)</MudText>
+                                            <MudText Typo="Typo.h6">@_glucoseRangePercentages.VeryLow.ToString("F1")%</MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudItem>
+                            </MudGrid>
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="12" Class="mt-4">
+                        <MudPaper Elevation="2" Class="pa-4">
+                            <MudGrid>
+                                <MudItem xs="12" md="6">
+                                    <MudText Typo="Typo.h6">Daily Overview</MudText>
+                                </MudItem>
+                                <MudItem xs="12" md="6" Class="d-flex justify-end">
+                                    <MudDatePicker Label="Select Day"
+                                                   Date="_selectedDate"
+                                                   DateChanged="OnDateChanged"
+                                                   MaxDate="_endDate"
+                                                   MinDate="_startDate"
+                                                   Editable="false" />
+                                </MudItem>
+                            </MudGrid>
+                            <MudText Typo="Typo.caption" Class="mb-4 mt-2">
+                                Blue line: Selected day | Gray band: 7-day range for each 10-min interval
+                            </MudText>
+                            <ApexChart TItem="GlucoseDataPoint"
+                                       Title="Blood Glucose (mmol/L)"
+                                       Height="400"
+                                       Options="_chartOptions">
+
+                                <ApexRangeAreaSeries TItem="GlucoseDataPoint"
+                                                     Items="_weeklyRangeData"
+                                                     Name="7-day Range"
+                                                     XValue="p => p.Time"
+                                                     Bottom="p => p.Min ?? 0"
+                                                     Top="p => p.Max ?? 0" />
+
+                                <ApexPointSeries TItem="GlucoseDataPoint"
+                                                 Items="_dailyData"
+                                                 Name="@_selectedDayLabel"
+                                                 SeriesType="SeriesType.Line"
+                                                 XValue="p => p.Time"
+                                                 YValue="p => p.Value" />
+
+                            </ApexChart>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Other Data">
+                <MudText Typo="Typo.body1" Class="pa-4">Additional visualizations coming soon...</MudText>
+            </MudTabPanel>
+        </MudTabs>
+    }
+</MudContainer>
+
+    @code {
+    private bool _isLoading = true;
+    private bool _dataLoaded = false;
+    private DateTime _startDate;
+    private DateTime _endDate;
+    private DateTime? _selectedDate;
+
+    // Split data by category
+    private IEnumerable<NumericDto> _glucoseLevels = Enumerable.Empty<NumericDto>();
+    private IEnumerable<NumericDto> _heartRates = Enumerable.Empty<NumericDto>();
+    private IEnumerable<NumericDto> _steps = Enumerable.Empty<NumericDto>();
+    private IEnumerable<NumericDto> _sleepSessions = Enumerable.Empty<NumericDto>();
+    private IEnumerable<WorkoutDto> _workouts = Enumerable.Empty<WorkoutDto>();
+    private IEnumerable<ManualInputDto> _medications = Enumerable.Empty<ManualInputDto>();
+    private IEnumerable<ManualInputDto> _menstruation = Enumerable.Empty<ManualInputDto>();
+
+    // Blood sugar specific data
+    private (double Average, double Min, double Max, int Count) _glucoseStats;
+    private (double VeryLow, double Low, double InRange, double High, double VeryHigh) _glucoseRangePercentages;
+    private List<GlucoseDataPoint> _dailyData = new();
+    private List<GlucoseDataPoint> _weeklyRangeData = new();
+    private List<RangePercentageData> _rangeChartData = new();
+    private string _selectedDayLabel = string.Empty;
+
+    private ApexChartOptions<RangePercentageData> _rangeChartOptions = new()
+    {
+        Chart = new Chart
+        {
+            Stacked = true,
+            Toolbar = new Toolbar { Show = false },            
+        },
+        PlotOptions = new PlotOptions
+        {
+            Bar = new PlotOptionsBar
+            {
+                Horizontal = false,
+                ColumnWidth = "95%",
+                BorderRadius = 8,
+            }
+        },
+        Xaxis = new XAxis
+        {
+            Labels = new XAxisLabels { Show = false },
+        },
+        Yaxis = new List<YAxis>
+        {
+            new YAxis
+            {
+                Max = 100,
+                Labels = new YAxisLabels {Show = false},
+                Reversed = true
+            }
+        },
+        Legend = new Legend { Show = false },
+        DataLabels = new DataLabels
+        {
+            Enabled = true,
+            Formatter = "function(val) { return val > 5 ? val.toFixed(1) + '%' : '' }"
+        }
+    };
+
+    private ApexChartOptions<GlucoseDataPoint> _chartOptions = new()
+    {
+        Chart = new Chart
+        {
+            Toolbar = new Toolbar { Show = false }
+        },
+        Xaxis = new XAxis
+        {
+            Type = XAxisType.Datetime,
+            Labels = new XAxisLabels
+            {
+                DatetimeFormatter = new DatetimeFormatter
+                {
+                    Hour = "HH:mm"
+                }
+            }
+        },
+        Yaxis = new List<YAxis>
+        {
+            new YAxis
+            {
+                DecimalsInFloat = 1,
+            }
+        },
+        Stroke = new Stroke
+        {
+            Width = new List<double> { 0, 2 },
+            Curve = Curve.Straight
+        },
+        Fill = new Fill
+        {
+            Type = new List<FillType> { FillType.Solid, FillType.Solid },
+            Opacity = new List<double> { 0.24, 1 }
+        },
+        Tooltip = new Tooltip
+        {
+            X = new TooltipX
+            {
+                Format = "HH:mm"
+            }
+        }
+    };
+
+    public class GlucoseDataPoint
+    {
+        public DateTime Time { get; set; }
+        public decimal? Value { get; set; }
+        public decimal? Min { get; set; }
+        public decimal? Max { get; set; }
+    }
+
+    public class RangePercentageData
+    {
+        public string Category { get; set; } = string.Empty;
+        public double Percentage { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _isLoading = true;
+
+        _endDate = DateTime.Now.AddDays(-2);
+        _startDate = _endDate.AddDays(-7);
+        _selectedDate = _endDate.Date; // Default to most recent day
+
+        try
+        {
+            var healthData = await HealthDataService.GetHealthDataAsync(_startDate, _endDate);
+
+            // Split the data into separate properties
+            _glucoseLevels = healthData.GlucoseLevels;
+            _heartRates = healthData.HeartRates;
+            _steps = healthData.Steps;
+            _sleepSessions = healthData.SleepSessions;
+            _workouts = healthData.Workouts;
+            _medications = healthData.Medications;
+            _menstruation = healthData.Menstruation;
+
+            _dataLoaded = true;
+
+            // Calculate blood sugar stats
+            CalculateGlucoseStats();
+            PrepareGlucoseChart();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"An error occurred while loading health data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OnDateChanged(DateTime? newDate)
+    {
+        if (newDate.HasValue)
+        {
+            _selectedDate = newDate.Value.Date;
+            PrepareGlucoseChart();
+            StateHasChanged();
+        }
+    }
+
+    private void CalculateGlucoseStats()
+    {
+        if (!_glucoseLevels.Any())
+        {
+            _glucoseStats = (0, 0, 0, 0);
+            _glucoseRangePercentages = (0, 0, 0, 0, 0);
+            return;
+        }
+
+        var values = _glucoseLevels.Select(x => x.HealthValue.NumericValue).ToList();
+        var totalCount = values.Count;
+
+        _glucoseStats = (
+            Average: values.Average(),
+            Min: values.Min(),
+            Max: values.Max(),
+            Count: totalCount
+        );
+
+        // Calculate range percentages
+        var veryLowCount = values.Count(v => v <= 3.0);
+        var lowCount = values.Count(v => v >= 3.1 && v <= 3.9);
+        var inRangeCount = values.Count(v => v >= 4.0 && v <= 9.9);
+        var highCount = values.Count(v => v >= 10.0 && v <= 13.8);
+        var veryHighCount = values.Count(v => v >= 13.9);
+
+        _glucoseRangePercentages = (
+            VeryLow: (veryLowCount / (double)totalCount) * 100,
+            Low: (lowCount / (double)totalCount) * 100,
+            InRange: (inRangeCount / (double)totalCount) * 100,
+            High: (highCount / (double)totalCount) * 100,
+            VeryHigh: (veryHighCount / (double)totalCount) * 100
+        );
+
+        // Prepare data for range chart (single category with all ranges stacked)
+        _rangeChartData = new List<RangePercentageData>
+        {
+            new RangePercentageData { Category = "Time in Range", Percentage = _glucoseRangePercentages.VeryLow },
+            new RangePercentageData { Category = "Time in Range", Percentage = _glucoseRangePercentages.Low },
+            new RangePercentageData { Category = "Time in Range", Percentage = _glucoseRangePercentages.InRange },
+            new RangePercentageData { Category = "Time in Range", Percentage = _glucoseRangePercentages.High },
+            new RangePercentageData { Category = "Time in Range", Percentage = _glucoseRangePercentages.VeryHigh }
+        };
+    }
+
+    private void PrepareGlucoseChart()
+    {
+        if (!_glucoseLevels.Any() || !_selectedDate.HasValue)
+        {
+            return;
+        }
+
+        var selectedDay = _selectedDate.Value.Date;
+        var selectedDayEnd = selectedDay.AddDays(1).AddSeconds(-1);
+        _selectedDayLabel = selectedDay.ToString("MMM dd");
+
+        // Get readings for the selected day
+        var dailyReadings = _glucoseLevels
+            .Where(x => x.DateFrom >= selectedDay && x.DateFrom <= selectedDayEnd)
+            .OrderBy(x => x.DateFrom)
+            .ToList();
+
+        // Create 10-minute buckets for the full 24-hour period (144 buckets)
+        _dailyData = new List<GlucoseDataPoint>();
+        _weeklyRangeData = new List<GlucoseDataPoint>();
+
+        for (int i = 0; i < 144; i++)
+        {
+            var bucketStart = selectedDay.AddMinutes(i * 10);
+            var bucketEnd = bucketStart.AddMinutes(10);
+
+            // Get daily value for this bucket (average if multiple readings)
+            var dailyValues = dailyReadings
+                .Where(x => x.DateFrom >= bucketStart && x.DateFrom < bucketEnd)
+                .Select(x => x.HealthValue.NumericValue)
+                .ToList();
+
+            var dailyValue = dailyValues.Any()
+            ? (decimal?)Math.Round(dailyValues.Average(), 1)
+            : null;
+
+            _dailyData.Add(new GlucoseDataPoint
+            {
+                Time = bucketStart,
+                Value = dailyValue
+            });
+
+            // Calculate weekly min/max for this time of day across past 7 days
+            var weeklyValues = new List<double>();
+            for (int day = 0; day <= 7; day++)
+            {
+                var dayToCheck = _startDate.Date.AddDays(day);
+                var timeStart = dayToCheck.Add(bucketStart.TimeOfDay);
+                var timeEnd = timeStart.AddMinutes(10);
+
+                var valuesInBucket = _glucoseLevels
+                    .Where(x => x.DateFrom >= timeStart && x.DateFrom < timeEnd)
+                    .Select(x => x.HealthValue.NumericValue)
+                    .ToList();
+
+                if (valuesInBucket.Any())
+                {
+                    weeklyValues.AddRange(valuesInBucket);
+                }
+            }
+
+            if (weeklyValues.Any())
+            {
+                var weeklyMin = Math.Round(weeklyValues.Min(), 1);
+                var weeklyMax = Math.Round(weeklyValues.Max(), 1);
+                _weeklyRangeData.Add(new GlucoseDataPoint
+                {
+                    Time = bucketStart,
+                    Min = (decimal)weeklyMin,
+                    Max = (decimal)weeklyMax
+                });
+            }
+        }
+    }
+}

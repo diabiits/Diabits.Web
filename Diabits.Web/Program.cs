@@ -1,6 +1,9 @@
+using ApexCharts;
+
 using Diabits.Web;
 using Diabits.Web.Infrastructure.Api;
 using Diabits.Web.Services.Auth;
+using Diabits.Web.Services.HealthData;
 using Diabits.Web.Services.Invites;
 
 using Microsoft.AspNetCore.Components.Authorization;
@@ -24,13 +27,24 @@ builder.Services.AddMudServices(config =>
     config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
 });
 
+builder.Services.AddApexCharts(e =>
+{
+    e.GlobalOptions = new ApexChartBaseOptions
+    {
+        Debug = true,
+        Theme = new Theme { Palette = PaletteType.Palette1 }
+    };
+});
+
 builder.Services.AddSingleton<JwtAuthStateProvider>();
 builder.Services.AddSingleton<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthStateProvider>());
 builder.Services.AddSingleton<TokenStorage>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<InviteService>();
+builder.Services.AddScoped<HealthDataService>();
 
 builder.Services.AddScoped<AuthorizationHandler>();
+
 builder.Services.AddHttpClient<ApiClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]!);
