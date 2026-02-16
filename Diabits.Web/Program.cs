@@ -32,7 +32,17 @@ builder.Services.AddApexCharts(e =>
     e.GlobalOptions = new ApexChartBaseOptions
     {
         Debug = true,
-        Theme = new Theme { Palette = PaletteType.Palette1 }
+        Theme = new Theme
+        {
+            Mode = Mode.Light,
+            Palette = PaletteType.Palette1,
+            Monochrome = new ThemeMonochrome {
+                Enabled = true,
+                Color = "#e27396",
+                ShadeTo = Mode.Light,
+                ShadeIntensity = 1
+            }
+        }
     };
 });
 
