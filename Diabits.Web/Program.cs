@@ -38,11 +38,28 @@ builder.Services.AddApexCharts(e =>
             Palette = PaletteType.Palette1,
             Monochrome = new ThemeMonochrome {
                 Enabled = true,
-                Color = "#e27396",
+                Color = "#91B3C9",//"#91CA97",//"#e27396",
                 ShadeTo = Mode.Light,
                 ShadeIntensity = 1
             }
-        }
+        },
+        States = new States
+        {
+            Hover = new StatesHover
+            {
+                Filter = new StatesFilter
+                {
+                    Type = StatesFilterType.none
+                }
+            },
+            Active = new StatesActive
+            {
+                Filter = new StatesFilter
+                {
+                    Type = StatesFilterType.none
+                }
+            }
+        },
     };
 });
 
