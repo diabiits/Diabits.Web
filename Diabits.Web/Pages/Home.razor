@@ -8,19 +8,19 @@
 
 <PageTitle>Dashboard</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-8">
+<MudContainer MaxWidth="MaxWidth.False" Gutters="false">
     @if (_isLoading)
     {
         <MudProgressCircular Indeterminate="true" />
     }
     else if (_dataLoaded)
     {
-        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6" SliderColor="MudBlazor.Color.Secondary" Ripple Border>
+        <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" SliderColor="MudBlazor.Color.Secondary" Ripple Border>
             <MudTabPanel Text="Timeline">
-                <MudPaper Elevation="2" Class="pa-4" Style="height: calc(100vh - 220px); display: flex; flex-direction: column;">
-                    <MudGrid Class="mb-4">
+                <MudPaper Elevation="2" Class="pa-2">
+                    <MudGrid Class="mb-4 px-6">
                         <MudItem xs="12" md="6">
-                            <MudText Typo="Typo.h6">Day Timeline - @_selectedDayLabel</MudText>
+                            <MudText Typo="Typo.h6">Timeline</MudText>
                         </MudItem>
                         <MudItem xs="12" md="6" Class="d-flex justify-end">
                             <MudDatePicker Label="Select Day"
@@ -83,138 +83,138 @@
             </MudTabPanel>
 
             <MudTabPanel Text="Daily Glucose Levels">
-                <MudGrid>
-                    <MudItem xs="12" md="3">
-                        <MudPaper Elevation="2" Class="pa-4">
-                            <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Average</MudText>
-                            <MudText Typo="Typo.h5">@_glucoseStats.Average.ToString("F1")</MudText>
-                            <MudText Typo="Typo.caption" Style="color:#5183A4">mmol/L</MudText>
-                        </MudPaper>
-                    </MudItem>
-                    <MudItem xs="12" md="3">
-                        <MudPaper Elevation="2" Class="pa-4">
-                            <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Minimum</MudText>
-                            <MudText Typo="Typo.h5">@_glucoseStats.Min.ToString("F1")</MudText>
-                            <MudText Typo="Typo.caption" Style="color:#5183A4">mmol/L</MudText>
-                        </MudPaper>
-                    </MudItem>
-                    <MudItem xs="12" md="3">
-                        <MudPaper Elevation="2" Class="pa-4">
-                            <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Maximum</MudText>
-                            <MudText Typo="Typo.h5">@_glucoseStats.Max.ToString("F1")</MudText>
-                            <MudText Typo="Typo.caption" Style="color:#5183A4">mmol/L</MudText>
-                        </MudPaper>
-                    </MudItem>
-                    <MudItem xs="12" md="3">
-                        <MudPaper Elevation="2" Class="pa-4">
-                            <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Readings</MudText>
-                            <MudText Typo="Typo.h5">@_glucoseStats.Count</MudText>
-                            <MudText Typo="Typo.caption" Style="color:#5183A4">on day</MudText>
-                        </MudPaper>
-                    </MudItem>
+                <MudPaper Elevation="2" Class="pa-2">
+                    <MudGrid>
+                        <MudItem xs="12" md="3">
+                            <MudPaper Elevation="2" Class="pa-4">
+                                <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Average</MudText>
+                                <MudText Typo="Typo.h5">@_glucoseStats.Average.ToString("F1")</MudText>
+                                <MudText Typo="Typo.caption" Style="color:#5183A4">mmol/L</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudPaper Elevation="2" Class="pa-4">
+                                <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Minimum</MudText>
+                                <MudText Typo="Typo.h5">@_glucoseStats.Min.ToString("F1")</MudText>
+                                <MudText Typo="Typo.caption" Style="color:#5183A4">mmol/L</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudPaper Elevation="2" Class="pa-4">
+                                <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Maximum</MudText>
+                                <MudText Typo="Typo.h5">@_glucoseStats.Max.ToString("F1")</MudText>
+                                <MudText Typo="Typo.caption" Style="color:#5183A4">mmol/L</MudText>
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="3">
+                            <MudPaper Elevation="2" Class="pa-4">
+                                <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">Readings</MudText>
+                                <MudText Typo="Typo.h5">@_glucoseStats.Count</MudText>
+                                <MudText Typo="Typo.caption" Style="color:#5183A4">on day</MudText>
+                            </MudPaper>
+                        </MudItem>
 
-                    <MudItem xs="12" md="3" Class="mt-4">
-                        <MudPaper Elevation="2" Class="pa-4">
-                            <MudText Typo="Typo.h6" Class="mb-3">Time in Ranges</MudText>
-                            <MudGrid>
-                                <MudItem xs="12">
-                                    <ApexChart TItem="RangePercentageData"
-                                               @key="@($"range-{_selectedDate:yyyyMMdd}")"
-                                               Height="430"
-                                               Options="_rangeChartOptions">
+                        <MudItem xs="12" md="3" Class="mt-4">
+                            <MudPaper Elevation="2" Class="pa-4">
+                                <MudText Typo="Typo.h6" Class="mb-3">Time in Ranges</MudText>
+                                <MudGrid>
+                                    <MudItem xs="12">
+                                        <ApexChart TItem="RangePercentageData"
+                                                   @key="@($"range-{_selectedDate:yyyyMMdd}")"
+                                                   Height="520"
+                                                   Options="_rangeChartOptions">
 
-                                        <ApexPointSeries TItem="RangePercentageData"
-                                                         Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.VeryHigh)"
-                                                         Name="Very High (≥13.9)"
-                                                         SeriesType="SeriesType.Bar"
-                                                         XValue="x => x.Category"
-                                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
+                                            <ApexPointSeries TItem="RangePercentageData"
+                                                             Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.VeryHigh)"
+                                                             Name="Very High (≥13.9)"
+                                                             SeriesType="SeriesType.Bar"
+                                                             XValue="x => x.Category"
+                                                             YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
 
-                                        <ApexPointSeries TItem="RangePercentageData"
-                                                         Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.High)"
-                                                         Name="High (10.0-13.8)"
-                                                         SeriesType="SeriesType.Bar"
-                                                         XValue="x => x.Category"
-                                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
+                                            <ApexPointSeries TItem="RangePercentageData"
+                                                             Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.High)"
+                                                             Name="High (10.0-13.8)"
+                                                             SeriesType="SeriesType.Bar"
+                                                             XValue="x => x.Category"
+                                                             YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
 
-                                        <ApexPointSeries TItem="RangePercentageData"
-                                                         Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.InRange)"
-                                                         Name="In Range (4.0-9.9)"
-                                                         SeriesType="SeriesType.Bar"
-                                                         XValue="x => x.Category"
-                                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
+                                            <ApexPointSeries TItem="RangePercentageData"
+                                                             Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.InRange)"
+                                                             Name="In Range (4.0-9.9)"
+                                                             SeriesType="SeriesType.Bar"
+                                                             XValue="x => x.Category"
+                                                             YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
 
-                                        <ApexPointSeries TItem="RangePercentageData"
-                                                         Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.Low)"
-                                                         Name="Low (3.1-3.9)"
-                                                         SeriesType="SeriesType.Bar"
-                                                         XValue="x => x.Category"
-                                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
+                                            <ApexPointSeries TItem="RangePercentageData"
+                                                             Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.Low)"
+                                                             Name="Low (3.1-3.9)"
+                                                             SeriesType="SeriesType.Bar"
+                                                             XValue="x => x.Category"
+                                                             YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
 
-                                        <ApexPointSeries TItem="RangePercentageData"
-                                                         Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.VeryLow)"
-                                                         Name="Very Low (≤3.0)"
-                                                         SeriesType="SeriesType.Bar"
-                                                         XValue="x => x.Category"
-                                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
+                                            <ApexPointSeries TItem="RangePercentageData"
+                                                             Items="_rangeChartData.Where(x => x.Percentage == _glucoseRangePercentages.VeryLow)"
+                                                             Name="Very Low (≤3.0)"
+                                                             SeriesType="SeriesType.Bar"
+                                                             XValue="x => x.Category"
+                                                             YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
 
-                                    </ApexChart>
-                                </MudItem>
-                            </MudGrid>
-                        </MudPaper>
-                    </MudItem>
+                                        </ApexChart>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+                        </MudItem>
 
-                    <MudItem xs="12" md="9" Class="mt-4">
-                        <MudPaper Elevation="2" Class="pa-4">
-                            <MudGrid>
-                                <MudItem xs="12" md="6">
-                                    <MudText Typo="Typo.h6">Daily Overview</MudText>
-                                </MudItem>
-                                <MudItem xs="12" md="6" Class="d-flex justify-end">
-                                    <MudDatePicker Label="Select Day"
-                                                   Date="_selectedDate"
-                                                   DateChanged="OnDateChanged"
-                                                   MaxDate="_endDate"
-                                                   MinDate="_startDate"
-                                                   Editable="false" />
-                                </MudItem>
-                            </MudGrid>
-                            <ApexChart TItem="GlucoseDataPoint"
-                                       @key="@($"daily-{_selectedDate:yyyyMMdd}")"
-                                       Height="430"
-                                       Options="_chartOptions">
+                        <MudItem xs="12" md="9" Class="mt-4">
+                            <MudPaper Elevation="2" Class="pa-4">
+                                <MudGrid>
+                                    <MudItem xs="12" md="6">
+                                        <MudText Typo="Typo.h6">Daily Overview</MudText>
+                                    </MudItem>
+                                    <MudItem xs="12" md="6" Class="d-flex justify-end">
+                                        <MudDatePicker Label="Select Day"
+                                                       Date="_selectedDate"
+                                                       DateChanged="OnDateChanged"
+                                                       MaxDate="_endDate"
+                                                       MinDate="_startDate"
+                                                       Editable="false" />
+                                    </MudItem>
+                                </MudGrid>
+                                <ApexChart TItem="GlucoseDataPoint"
+                                           @key="@($"daily-{_selectedDate:yyyyMMdd}")"
+                                           Height="520"
+                                           Options="_chartOptions">
 
-                                <ApexRangeAreaSeries TItem="GlucoseDataPoint"
-                                                     Items="_weeklyRangeData"
-                                                     Name="7-day Range"
+                                    <ApexRangeAreaSeries TItem="GlucoseDataPoint"
+                                                         Items="_weeklyRangeData"
+                                                         Name="7-day Range"
+                                                         XValue="p => p.Time"
+                                                         Bottom="p => (decimal)p.Min"
+                                                         Top="p => (decimal)p.Max" />
+
+                                    <ApexPointSeries TItem="GlucoseDataPoint"
+                                                     Items="_dailyData"
+                                                     Name="@_selectedDayLabel"
+                                                     SeriesType="SeriesType.Line"
                                                      XValue="p => p.Time"
-                                                     Bottom="p => (decimal)p.Min"
-                                                     Top="p => (decimal)p.Max" />
+                                                     YValue="p => p.Value" />
 
-                                <ApexPointSeries TItem="GlucoseDataPoint"
-                                                 Items="_dailyData"
-                                                 Name="@_selectedDayLabel"
-                                                 SeriesType="SeriesType.Line"
-                                                 XValue="p => p.Time"
-                                                 YValue="p => p.Value" />
-
-                            </ApexChart>
-                        </MudPaper>
-                    </MudItem>
-                </MudGrid>
+                                </ApexChart>
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
             </MudTabPanel>
 
             <MudTabPanel Text="Period Review">
                 <MudText Typo="Typo.body1" Class="pa-4">Additional visualizations coming soon...</MudText>
             </MudTabPanel>
             <MudTabPanel Text="Compare Days"> <MudText Typo="Typo.body1" Class="pa-4">Additional visualizations coming soon...</MudText> </MudTabPanel>
-            <MudTabPanel Text="By Data Type"> <MudText Typo="Typo.body1" Class="pa-4">Additional visualizations coming soon...</MudText> </MudTabPanel>
-            <MudTabPanel Text="Context Data"> <MudText Typo="Typo.body1" Class="pa-4">Additional visualizations coming soon...</MudText> </MudTabPanel>
         </MudTabs>
     }
 </MudContainer>
 
-    @code {
+@code {
     //TODO Calendar-ish view (heat map) with color coding for time in range, low, high, etc. - maybe with ability to click on a day to see details for that day
     //TODO Chart view per day for all kinds of data on the day
     //TODO Change colors of charts to be non-confrontational (e.g. green for in range, yellow for high/low, red for very high/low)
@@ -249,6 +249,7 @@
     private List<TimelineDataPoint> _timelineSleepData = new();
     private List<TimelineDataPoint> _timelineMedicationData = new();
     private List<TimelineDataPoint> _timelineMenstruationData = new();
+    private List<string> _medicationNames = new();
 
     private ApexChartOptions<RangePercentageData> _rangeChartOptions = new()
     {
@@ -352,28 +353,28 @@
             //Type = new List<FillType> { FillType.Gradient, FillType.Pattern },
             Opacity = new List<double> { 0.50, 0.80 }
         },
-        // Tooltip = new Tooltip
-        // {
-        //     Shared = true,
-        //     Intersect = false,
-        //     X = new TooltipX { Format = "HH:mm" },
-        //     Y = new TooltipY
-        //     {
-        //         Formatter =
-        //         "function(val) {" +
-        //         "  if (val === null || val === undefined) return '';" +
-        //         "  if (Array.isArray(val)) {" +
-        //         "    var lo = val[0], hi = val[1];" +
-        //         "    if (lo == null || hi == null) return '';" +
-        //         "    return lo.toFixed(1) + ' - ' + hi.toFixed(1);" +
-        //         "  }" +
-        //         "  return Number(val).toFixed(1);" +
-        //         "}"
-        //     }
-        // }
+        Tooltip = new Tooltip
+        {
+            Shared = true,
+            Intersect = false,
+            X = new TooltipX { Format = "HH:mm" },
+            Y = new TooltipY
+            {
+                Formatter =
+                "function(val) {" +
+                "  if (val === null || val === undefined) return '';" +
+                "  if (Array.isArray(val)) {" +
+                "    var lo = val[0], hi = val[1];" +
+                "    if (lo == null || hi == null) return '';" +
+                "    return lo.toFixed(1) + ' - ' + hi.toFixed(1);" +
+                "  }" +
+                "  return Number(val).toFixed(1);" +
+                "}"
+            }
+        }
     };
 
-    private ApexChartOptions<TimelineDataPoint> _timelineChartOptions = new()
+    private ApexChartOptions<TimelineDataPoint> _timelineChartOptions => new()
     {
         Chart = new Chart
         {
@@ -385,15 +386,11 @@
             Labels = new XAxisLabels
             {
                 Show = true,
-                DatetimeFormatter = new DatetimeFormatter
-                {
-                    Hour = "HH:mm"
-                },
-                Style = new AxisLabelStyle
-                {
-                    FontSize = "12px"
-                }
-            }
+                Format = "HH:mm",
+                DatetimeUTC = false
+            },
+            DecimalsInFloat = 1,
+            Tooltip = new AxisTooltip { Enabled = false }
         },
         Yaxis = new List<YAxis>
         {
@@ -422,6 +419,7 @@
             {
                 Min = 0,
                 Max = 25,
+                DecimalsInFloat = 0,
                 Title = new AxisTitle { Text = "Glucose (mmol/L)" },
                 SeriesName = "Glucose"
             },
@@ -429,9 +427,11 @@
             {
                 Opposite = true,
                 Min = 40,
-                Max = 180,
+                Max = 160,
+                DecimalsInFloat = 0,
                 Title = new AxisTitle { Text = "Heart Rate (bpm)" },
-                SeriesName = "Heart Rate"
+                SeriesName = "Heart Rate",
+                AxisTicks = new AxisTicks { Show = false }
             },
             new YAxis
             {
@@ -446,10 +446,10 @@
             Width = new List<double> { 0, 0, 0, 3, 2, 0 },
             Curve = Curve.Smooth
         },
-        Colors = ["#FFB6C1", "#0000FF", "#FF0000", "#AC0000", "#FF6B6B", "#00FF00"],
+        Colors = ["#D4C9D8", "#91B3C9", "#5f7381", "#AC0000", "#47565f", "#5f7381"],
         Fill = new Fill
         {
-            Opacity = new List<double> { 0.5, 0.4, 0.4, 0.80, 0.80, 1.0 }
+            Opacity = new List<double> { 0.5, 0.4, 0.4, 0.80, 0.80, 1.0 },
         },
         Markers = new Markers
         {
@@ -459,7 +459,7 @@
         {
             Show = true,
             Position = LegendPosition.Top,
-            HorizontalAlign = ApexCharts.Align.Center,
+            HorizontalAlign = ApexCharts.Align.Left,
             FontSize = "14px",
             Markers = new LegendMarkers
             {
@@ -469,19 +469,20 @@
         },
         Tooltip = new Tooltip
         {
-            Custom = @"function({ series, seriesIndex, dataPointIndex, w }) {
-                if (seriesIndex === 5) {
+            Custom = $@"function({{ series, seriesIndex, dataPointIndex, w }}) {{
+                if (seriesIndex === 5) {{
+                    var medicationNames = [{string.Join(",", _medicationNames.Select(n => $"'{n}'"))}];
+                    var name = medicationNames[dataPointIndex] || 'Medication';
                     var data = w.config.series[seriesIndex].data[dataPointIndex];
-                    var name = data.name || 'Medication';
-                    var time = new Date(data.x).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    var time = new Date(data.x).toLocaleTimeString('en-US', {{ hour: '2-digit', minute: '2-digit' }});
                     return '<div class=""apexcharts-tooltip-custom"">' +
-                           '<div style=""padding: 8px; background: #00FF00; color: #000; border-radius: 4px;"">' +
+                           '<div style=""padding: 10px; background: #5f7381; color: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);"">' +
                            '<strong>' + name + '</strong><br/>' +
-                           time +
+                           '<span style=""opacity: 0.9;"">' + time + '</span>' +
                            '</div></div>';
-                }
+                }}
                 return '';
-            }"
+            }}"
         }
     };
 
@@ -756,7 +757,7 @@
             {
                 _timelineGlucoseData.Add(new TimelineDataPoint
                 {
-                    Time = bucketStart,
+                    Time = bucketStart.ToLocalTime(), // Convert UTC to local time
                     Value = value
                 });
             }
@@ -782,7 +783,7 @@
             {
                 _timelineHeartRateData.Add(new TimelineDataPoint
                 {
-                    Time = bucketStart,
+                    Time = bucketStart.ToLocalTime(), // Convert UTC to local time
                     Value = value
                 });
             }
@@ -792,8 +793,8 @@
         _timelineWorkoutData = new List<TimelineDataPoint>();
         foreach (var workout in dailyWorkouts)
         {
-            var startTime = workout.DateFrom;
-            var endTime = workout.DateTo ?? workout.DateFrom.AddHours(1); // Default 1 hour if no end time
+            var startTime = workout.DateFrom; // Convert UTC to local time
+            var endTime = (workout.DateTo ?? workout.DateFrom.AddHours(1)); // Convert UTC to local time
 
             // Add point just before workout starts (0 value)
             _timelineWorkoutData.Add(new TimelineDataPoint
@@ -831,8 +832,8 @@
         _timelineSleepData = new List<TimelineDataPoint>();
         foreach (var sleep in dailySleepSessions)
         {
-            var startTime = sleep.DateFrom;
-            var endTime = sleep.DateTo ?? sleep.DateFrom.AddHours(8); // Default 8 hours if no end time
+            var startTime = sleep.DateFrom.ToLocalTime(); // Convert UTC to local time
+            var endTime = (sleep.DateTo ?? sleep.DateFrom.AddHours(8)); // Convert UTC to local time
 
             // Add point just before sleep starts (0 value)
             _timelineSleepData.Add(new TimelineDataPoint
@@ -868,14 +869,16 @@
 
         // Create medication markers
         _timelineMedicationData = new List<TimelineDataPoint>();
+        _medicationNames = new List<string>();
         foreach (var medication in dailyMedications)
         {
             _timelineMedicationData.Add(new TimelineDataPoint
             {
-                Time = medication.DateFrom,
+                Time = medication.DateFrom, // Convert UTC to local time
                 Value = 12.5m, // Middle of glucose scale (0-25)
-                Name = medication.Medication.Name ?? "Medication"
+                Name = medication.Medication!.Name ?? "Medication"
             });
+            _medicationNames.Add(medication.Medication!.Name ?? "Medication");
         }
 
         // Create menstruation band (thin band at bottom for full day)

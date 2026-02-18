@@ -59,7 +59,7 @@ builder.Services.AddApexCharts(e =>
                     Type = StatesFilterType.none
                 }
             }
-        },
+        }        
     };
 });
 
