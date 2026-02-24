@@ -1,0 +1,278 @@
+@using ApexCharts
+@using Diabits.Web.Services.Dashboard
+@using Diabits.Web.DTOs
+@using Diabits.Web.Components.Shared
+@inject DashboardService DashboardService
+@inject ISnackbar Snackbar
+
+<MudPaper Elevation="2" Class="pa-2 d-flex flex-grow-1">
+    @if (_isLoading)
+    {
+        <LoadingIndicator />
+    }
+    else if (_timeline != null && HasData())
+    {
+        @* TODO Show weekday in date *@
+        <MudContainer MaxWidth="MaxWidth.False" Gutters="false" Class="pa-2">
+            <ApexChart TItem="TimelinePoint"
+                       @key="@($"timeline-{SelectedDate:yyyyMMdd}")"
+                       Options="_chartOptions">
+
+                <ApexPointTooltip>
+                    @{
+                        var hovered = context.DataPoint.Items.FirstOrDefault() as TimelinePoint;
+                        if (hovered is null) return;
+
+                        var time = hovered.Time;
+
+                        bool Active(TimelinePoint? p) => (p?.Value ?? 0) > 0;
+                        bool HasValue(TimelinePoint? p) => p?.Value is not null;
+
+                        var rows = OrderedSeries()
+                                    .Select(s => new { s.Name, s.Type, Point = At(time, s.Name) })
+                                    .Where(x => x.Point is not null)
+                                    .Where(r =>
+                                        r.Type is TimelineSeriesType.Line or TimelineSeriesType.Scatter
+                                        ? HasValue(r.Point)
+                                        : Active(r.Point)
+                                    )
+                                    .ToList();
+
+                        if (rows.Count == 0) return;
+                    }
+                    <MudPaper Elevation="0" Class="pa-3" Style="min-width: 190px;">
+                        <MudText Typo="Typo.subtitle2"
+                                 Class="mb-2 pb-2"
+                                 Style="font-weight:600; border-bottom: 1px solid var(--mud-palette-lines-default);">
+                            @time.ToString("HH:mm")
+                        </MudText>
+
+                        <MudStack Spacing="1">
+                            @foreach (var r in rows)
+                            {
+                                var p = r.Point!;
+
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                        <span style="
+                                            width:10px;height:10px;border-radius:999px;
+                                            background:@GetSeriesColor(r.Name);
+                                            display:inline-block;
+                                            box-shadow: 0 0 0 1px var(--mud-palette-lines-default) inset;">
+                                        </span>
+
+                                        <MudText Typo="Typo.body2" Style="font-weight:600">@r.Name</MudText>
+                                    </MudStack>
+
+                                    <MudText Typo="Typo.body2">@(p.Name ?? "Active")</MudText>
+                                </MudStack>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                </ApexPointTooltip>
+
+                <ChildContent>
+                    @foreach (var s in OrderedSeries())
+                    {
+                        <ApexPointSeries TItem="TimelinePoint"
+                                         Items="s.Points"
+                                         Name="@s.Name"
+                                         SeriesType="@MapSeriesType(s.Type)"
+                                         XValue="p => p.Time"
+                                         YValue="p => (decimal?)p.Value" />
+                    }
+                </ChildContent>
+
+            </ApexChart>
+        </MudContainer>
+    }
+    else if (_timeline != null)
+    {
+        <div class="d-flex justify-center align-items-center pa-8">
+            <MudText Typo="Typo.body1" Color="MudBlazor.Color.Error">No data available for this date</MudText>
+        </div>
+    }
+</MudPaper>
+
+@code {
+    [Parameter]
+    public DateTime? SelectedDate { get; set; }
+
+    [Parameter]
+    public bool IsActive { get; set; }
+
+    private bool _isLoading = false;
+    private TimelineChartResponse? _timeline;
+    private Dictionary<DateTime, Dictionary<string, TimelinePoint>> _byTime = new();
+    private DateTime? _lastLoadedDate;
+
+    private static readonly string[] SeriesOrder = { "Menstruation", "Sleep", "Workout", "Heart Rate", "Medication", "Glucose" };
+    private static readonly IReadOnlyDictionary<string, string> SeriesColor = new Dictionary<string, string>
+    {
+        ["Menstruation"] = "#9da4a8",
+        ["Sleep"] = "#91B3C9",
+        ["Workout"] = "#D4C9D8",
+        ["Heart Rate"] = "#e27396",
+        ["Medication"] = "#47565f",
+        ["Glucose"] = "#AC0000",
+    };
+    private static string GetSeriesColor(string seriesName) => SeriesColor.TryGetValue(seriesName, out var c) ? c : "var(--mud-palette-text-secondary)";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsActive && SelectedDate.HasValue && SelectedDate != _lastLoadedDate)
+        {
+            _lastLoadedDate = SelectedDate;
+            await LoadTimelineDataAsync();
+        }
+    }
+    
+    private IEnumerable<TimelineSeries> OrderedSeries()
+    {
+        if (_timeline?.Series is null) return Enumerable.Empty<TimelineSeries>();
+
+        return _timeline.Series.OrderBy(s =>
+        {
+            var i = Array.IndexOf(SeriesOrder, s.Name);
+            return i == -1 ? int.MaxValue : i;
+        });
+    }
+
+    private void BuildLookup()
+    {
+        _byTime = _timeline!.Series
+            .SelectMany(s => s.Points.Select(p => new { s.Name, Point = p }))
+            .GroupBy(x => x.Point.Time)
+            .ToDictionary(
+                g => g.Key,
+                g => g.ToDictionary(x => x.Name, x => x.Point)
+            );
+    }
+
+    private TimelinePoint? At(DateTime t, string seriesName)
+        => _byTime.TryGetValue(t, out var m) && m.TryGetValue(seriesName, out var p) ? p : null;
+
+    private static SeriesType MapSeriesType(TimelineSeriesType t) => t switch
+    {
+        TimelineSeriesType.Line => SeriesType.Line,
+        TimelineSeriesType.Area => SeriesType.Area,
+        TimelineSeriesType.Scatter => SeriesType.Scatter,
+        _ => SeriesType.Line
+    };
+
+    private async Task LoadTimelineDataAsync()
+    {
+        if (!SelectedDate.HasValue) return;
+
+        _isLoading = true;
+        try
+        {
+            _timeline = await DashboardService.GetTimelineAsync(SelectedDate.Value.Date);
+            BuildLookup();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load timeline data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private bool HasData() => _timeline?.Series.SelectMany(s => s.Points).Any(p => (p.Value ?? 0) != 0) == true;
+
+
+    private ApexChartOptions<TimelinePoint> _chartOptions => new()
+    {
+        Chart = new Chart
+        {
+            Zoom = new Zoom { AllowMouseWheelZoom = false },
+            Height = "100%",
+            Width = "100%",
+            RedrawOnParentResize = true
+        },
+        Legend = new Legend
+        {
+            Show = true,
+            Position = LegendPosition.Top,
+            HorizontalAlign = ApexCharts.Align.Left,
+            FontSize = "14px",
+        },
+        DataLabels = new DataLabels { Enabled = false },
+        Xaxis = new XAxis
+        {
+            Type = XAxisType.Datetime,
+            Min = SelectedDate.HasValue ? new DateTimeOffset(SelectedDate.Value.Date).ToUnixTimeMilliseconds() : null,
+            Max = SelectedDate.HasValue ? new DateTimeOffset(SelectedDate.Value.Date.AddDays(1).AddMinutes(-10)).ToUnixTimeMilliseconds() : null,
+            Labels = new XAxisLabels
+            {
+                Show = true,
+                Format = "HH:mm",
+                DatetimeUTC = false
+            },
+            Tooltip = new AxisTooltip { Enabled = false }
+
+        },
+        Yaxis = new List<YAxis>
+        {
+            new YAxis { Min = 0, Max = 1, Show = false, SeriesName = "Menstruation" },
+            new YAxis { Min = 0, Max = 1, Show = false, SeriesName = "Sleep" },
+            new YAxis { Min = 0, Max = 1, Show = false, SeriesName = "Workout" },
+
+            new YAxis
+            {
+                Opposite = true,
+                Min = 40,
+                Max = 180,
+                DecimalsInFloat = 0,
+                Title = new AxisTitle { Text = "Heart Rate (bpm)" },
+                SeriesName = "Heart Rate",
+            },
+
+            new YAxis { Min = 0, Max = 1, Show = false, SeriesName = "Medication" },
+
+            new YAxis
+            {
+                Min = 0,
+                Max = 25,
+                DecimalsInFloat = 1,
+                Title = new AxisTitle { Text = "Glucose Level (mmol/L)" },
+                SeriesName = "Glucose"
+            }
+        },
+        Stroke = new Stroke
+        {
+            Width = new List<double> { 0, 0, 0, 3, 0, 3 },
+            Curve = Curve.Smooth
+        },
+        Colors = ["#9da4a8", "#91B3C9", "#D4C9D8", "#e27396", "#47565f", "#AC0000"],
+        Fill = new Fill
+        {
+            Opacity = new List<double> { 0.3, 0.8, 0.9, 1, 1, 1 },
+        },
+        Markers = new Markers
+        {
+            Size = new List<double> { 0, 0, 0, 1, 8, 1 }
+        },
+        Tooltip = new Tooltip
+        {
+            Enabled = true,
+            Shared = true,
+            FollowCursor = true,
+            Intersect = false,
+            X = new TooltipX { Show = false }
+        }
+    };
+    // TODO Move 
+    public record TimelineChartResponse(List<TimelineSeries> Series);
+    public record TimelineSeries(string Name, TimelineSeriesType Type, List<TimelinePoint> Points);
+    public record TimelinePoint(DateTime Time, double? Value, string? Name = null);
+
+    public enum TimelineSeriesType
+    {
+        Line,
+        Area,
+        Scatter
+    }
+}

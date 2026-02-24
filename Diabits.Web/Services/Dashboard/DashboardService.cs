@@ -1,6 +1,9 @@
 using Diabits.Web.DTOs;
 using Diabits.Web.Infrastructure.Api;
 
+using static Diabits.Web.Components.Dashboard.DailyGlucoseTab;
+using static Diabits.Web.Components.Dashboard.TimelineTab;
+
 namespace Diabits.Web.Services.Dashboard;
 
 public class DashboardService
@@ -12,22 +15,41 @@ public class DashboardService
         _apiClient = apiClient;
     }
 
-    public async Task<TimelineResponse> GetTimelineAsync(DateTime date, int bucketMinutes = 10)
+    public async Task<TimelineChartResponse> GetTimelineAsync(DateTime date)
     {
         //TODO formatting date?
         var dateStr = date.ToString("yyyy-MM-ddTHH:mm:ss");
-        var result = await _apiClient.GetAsync<TimelineResponse>($"Dashboard/timeline?date={dateStr}&bucketMinutes={bucketMinutes}");
+        var result = await _apiClient.GetAsync<TimelineChartResponse>($"Dashboard/timeline?date={dateStr}");
 
         if (!result.IsSuccess)
         {
-            throw new HttpRequestException(result.Error ?? "Failed to load timeline data");
+            throw new HttpRequestException(result.Error ?? "Failed to load data");
         }
 
         if (result.Data == null)
         {
-            throw new HttpRequestException("No timeline data returned");
+            throw new HttpRequestException("No data returned");
+        }
+
+        return result.Data;
+    }
+
+    public async Task<DailyGlucoseResponse> GetDailyGlucoseAsync(DateTime date)
+    {
+        var dateStr = date.ToString("yyyy-MM-dd");
+        var result = await _apiClient.GetAsync<DailyGlucoseResponse>($"Dashboard/glucose/daily?date={dateStr}");
+
+        if (!result.IsSuccess)
+        {
+            throw new HttpRequestException(result.Error ?? "Failed to load data");
+        }
+
+        if (result.Data == null)
+        {
+            throw new HttpRequestException("No data returned");
         }
 
         return result.Data;
     }
 }
+

@@ -1,0 +1,11 @@
+@using MudBlazor
+
+<MudContainer Class="d-flex flex-grow-1 flex-column justify-content-center align-items-center">
+    <LottiePlayer Path="assets/loading_icon.json" Style="width:42%;pointer-events:none;" />
+    <MudText Typo="Typo.h6" Color="MudBlazor.Color.Secondary">@Message</MudText>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string Message { get; set; } = "Loading..";
+}
