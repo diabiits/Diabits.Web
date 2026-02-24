@@ -1,9 +1,84 @@
 ﻿@page "/"
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Authorization
+@using Diabits.Web.Components.Dashboard
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudContainer MaxWidth="MaxWidth.False" Gutters="false" Class="d-flex flex-column flex-grow-1" Style="max-height: 100vh - 64px;">
+    <MudTabs @bind-ActivePanelIndex="_activeTabIndex" Elevation="2" PanelClass="pa-6 d-flex" TabHeaderClass="pr-4" Class="d-flex flex-grow-1" SliderColor="MudBlazor.Color.Secondary" EnableDragAndDrop Ripple Border Rounded ApplyEffectsToContainer KeepPanelsAlive>
+        <Header>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="d-flex align-self-center">
+                <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                               Color="MudBlazor.Color.Secondary"
+                               OnClick="PreviousDay"
+                               Disabled="!CanGoToPreviousDay()" />
 
-Welcome to your new app.
+                <MudDatePicker @bind-Date="_selectedDate"
+                               MaxDate="_maxDate"
+                               Editable="false"
+                               Variant="Variant.Text"
+                               Adornment="Adornment.None"
+                               TransformOrigin="Origin.BottomLeft" 
+                               Color="MudBlazor.Color.Secondary"
+                               Margin="Margin.Dense"
+                               Underline="false"
+                               Class="cursor-pointer"
+                               Style="min-width: 180px; border: 1px solid var(--mud-palette-divider); border-radius: 8px; padding: 4px 60px;" />
+
+                <MudIconButton Icon="@Icons.Material.Filled.ChevronRight"
+                               Color="MudBlazor.Color.Secondary"
+                               OnClick="NextDay"
+                               Disabled="!CanGoToNextDay()" />
+            </MudStack>
+        </Header>
+        <ChildContent>
+            <MudTabPanel Text="Timeline">
+                <TimelineTab SelectedDate="_selectedDate" IsActive="_activeTabIndex == 0" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Daily Glucose Levels">
+                <DailyGlucoseTab SelectedDate="_selectedDate" IsActive="_activeTabIndex == 1" />
+            </MudTabPanel>
+
+            <MudTabPanel Text="Period Review">
+                <MudText Typo="Typo.body1" Class="pa-4">Additional visualizations coming soon...</MudText>
+            </MudTabPanel>
+            <MudTabPanel Text="Compare Days">
+                <MudText Typo="Typo.body1" Class="pa-4">Additional visualizations coming soon...</MudText>
+            </MudTabPanel>
+        </ChildContent>
+    </MudTabs>
+</MudContainer>
+
+@code {
+    private DateTime _maxDate;
+    private DateTime? _selectedDate;
+    private int _activeTabIndex = 0;
+
+    protected override void OnInitialized()
+    {
+        _maxDate = DateTime.Now.Hour >= 7 ? DateTime.Today.AddDays(-1) : DateTime.Today.AddDays(-2);
+        _selectedDate = _maxDate;
+    }
+
+    private void PreviousDay()
+    {
+        if (_selectedDate.HasValue)
+        {
+            _selectedDate = _selectedDate.Value.AddDays(-1);
+        }
+    }
+
+    private void NextDay()
+    {
+        if (_selectedDate.HasValue && CanGoToNextDay())
+        {
+            _selectedDate = _selectedDate.Value.AddDays(1);
+        }
+    }
+
+    private bool CanGoToPreviousDay() => _selectedDate.HasValue;
+
+    private bool CanGoToNextDay() => _selectedDate.HasValue && _selectedDate.Value.Date < _maxDate.Date;
+}

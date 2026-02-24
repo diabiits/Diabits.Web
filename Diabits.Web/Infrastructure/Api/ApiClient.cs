@@ -1,4 +1,6 @@
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Diabits.Web.Infrastructure.Api;
 
@@ -8,6 +10,11 @@ namespace Diabits.Web.Infrastructure.Api;
 public class ApiClient
 {
     private readonly HttpClient _http;
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+    };
 
     public ApiClient(HttpClient http)
     {
@@ -26,7 +33,7 @@ public class ApiClient
                 return ApiResult<T>.Failure(error);
             }
 
-            var data = await response.Content.ReadFromJsonAsync<T>(ct);
+            var data = await response.Content.ReadFromJsonAsync<T>(JsonOptions, ct);
             return ApiResult<T>.Success(data);
         }
         catch (HttpRequestException)
@@ -39,7 +46,7 @@ public class ApiClient
     {
         try
         {
-            var response = await _http.PostAsJsonAsync(endpoint, request, ct);
+            var response = await _http.PostAsJsonAsync(endpoint, request, JsonOptions, ct);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -47,7 +54,7 @@ public class ApiClient
                 return ApiResult<TResponse>.Failure(error);
             }
 
-            var data = await response.Content.ReadFromJsonAsync<TResponse>(ct);
+            var data = await response.Content.ReadFromJsonAsync<TResponse>(JsonOptions, ct);
             return ApiResult<TResponse>.Success(data);
         }
         catch (HttpRequestException)
@@ -60,7 +67,7 @@ public class ApiClient
     {
         try
         {
-            var response = await _http.PutAsJsonAsync(endpoint, request, ct);
+            var response = await _http.PutAsJsonAsync(endpoint, request, JsonOptions, ct);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -68,7 +75,7 @@ public class ApiClient
                 return ApiResult<TResponse>.Failure(error);
             }
 
-            var data = await response.Content.ReadFromJsonAsync<TResponse>(ct);
+            var data = await response.Content.ReadFromJsonAsync<TResponse>(JsonOptions, ct);
             return ApiResult<TResponse>.Success(data);
         }
         catch (HttpRequestException)

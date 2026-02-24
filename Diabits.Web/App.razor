@@ -1,10 +1,15 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Diabits.Web.Components.Shared
 
-@* TODO Implement a proper "Not found page" *@
 <CascadingAuthenticationState>
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <Authorizing>
+                    <div class="d-flex justify-center align-items-center vh-100">
+                        <LoadingIndicator Message="Authenticating.." />
+                    </div>
+                </Authorizing>
                 <NotAuthorized>
                     <RedirectToLogin />
                 </NotAuthorized>

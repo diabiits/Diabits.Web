@@ -59,6 +59,8 @@ public class AuthService
     }
 
     //TODO Move?
+    public record AuthResponse(string AccessToken);
+
     public record AuthResult(bool Ok, string? Error)
     {
         public static AuthResult Success() => new(true, null);

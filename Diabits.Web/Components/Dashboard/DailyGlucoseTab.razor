@@ -1,0 +1,313 @@
+﻿@using ApexCharts
+@using Diabits.Web.Services.Dashboard
+@using Diabits.Web.Components.Shared
+@inject DashboardService DashboardService
+@inject ISnackbar Snackbar
+
+<MudContainer MaxWidth="MaxWidth.False" Gutters="false" Class="pa-2 d-flex flex-grow-1">
+    @if (_isLoading)
+    {
+        <LoadingIndicator />
+    }
+    else if (_data is not null)
+    {
+        <MudGrid Spacing="4">
+            <MudItem xs="12" md="3">@StatCard("Average", _data.Stats.Average.ToString("F1"), "mmol/L")</MudItem>
+            <MudItem xs="12" md="3">@StatCard("Minimum", _data.Stats.Min.ToString("F1"), "mmol/L")</MudItem>
+            <MudItem xs="12" md="3">@StatCard("Maximum", _data.Stats.Max.ToString("F1"), "mmol/L")</MudItem>
+            <MudItem xs="12" md="3">@StatCard("Readings", _data.Stats.Count.ToString(), "on day")</MudItem>
+
+            <MudItem xs="3">
+                <MudPaper Elevation="2" Class="pa-4">
+                    <MudText Typo="Typo.h6">Time in Ranges</MudText>
+
+                    <ApexChart TItem="RangePercentageData"
+                               @key="@($"glucose-range-{SelectedDate:yyyyMMdd}")"
+                               Height="520"
+                               Options="_rangeChartOptions">
+
+                        <ApexPointSeries TItem="RangePercentageData"
+                                         Items="_veryHighSeries"
+                                         Name="Very High (≥13.9)"
+                                         SeriesType="SeriesType.Bar"
+                                         XValue="x => x.Category"
+                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
+
+                        <ApexPointSeries TItem="RangePercentageData"
+                                         Items="_highSeries"
+                                         Name="High (10.0-13.8)"
+                                         SeriesType="SeriesType.Bar"
+                                         XValue="x => x.Category"
+                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
+
+                        <ApexPointSeries TItem="RangePercentageData"
+                                         Items="_inRangeSeries"
+                                         Name="In Range (4.0-9.9)"
+                                         SeriesType="SeriesType.Bar"
+                                         XValue="x => x.Category"
+                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
+
+                        <ApexPointSeries TItem="RangePercentageData"
+                                         Items="_lowSeries"
+                                         Name="Low (3.1-3.9)"
+                                         SeriesType="SeriesType.Bar"
+                                         XValue="x => x.Category"
+                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
+
+                        <ApexPointSeries TItem="RangePercentageData"
+                                         Items="_veryLowSeries"
+                                         Name="Very Low (≤3.0)"
+                                         SeriesType="SeriesType.Bar"
+                                         XValue="x => x.Category"
+                                         YValue="x => (decimal)Math.Round(x.Percentage, 1)" />
+
+                    </ApexChart>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="9">
+                <MudPaper Elevation="2" Class="pa-4">
+                    <MudText Typo="Typo.h6">Daily Overview</MudText>
+
+                    @if (!_hasAnyDayData)
+                    {
+                        <div class="d-flex justify-center align-items-center pa-8">
+                            <MudText Typo="Typo.body1" Color="MudBlazor.Color.Error">No glucose readings for this date</MudText>
+                        </div>
+                    }
+                    else
+                    {
+                        <ApexChart TItem="GlucosePoint"
+                                   @key="@($"glucose-daily-{SelectedDate:yyyyMMdd}")"
+                                   Height="520"
+                                   Options="_dailyChartOptions">
+
+                            <ChildContent>
+                                <ApexRangeAreaSeries TItem="GlucosePoint"
+                                                     Items="_weeklyRangePointsSafe"
+                                                     Name="Previous 7 days"
+                                                     XValue="p => p.Time"
+                                                     Bottom="p => (decimal)p.Min!"
+                                                     Top="p => (decimal)p.Max!" />
+
+                                <ApexPointSeries TItem="GlucosePoint"
+                                                 Items="_bucketPoints"
+                                                 Name="@_selectedDayLabel"
+                                                 SeriesType="SeriesType.Line"
+                                                 XValue="p => p.Time"
+                                                 YValue="p => (decimal?)p.Value" />
+                            </ChildContent>
+
+                        </ApexChart>
+                    }
+                </MudPaper>
+            </MudItem>
+
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+[Parameter] 
+public DateTime? SelectedDate { get; set; }
+
+[Parameter]
+public bool IsActive { get; set; }
+
+private bool _isLoading;
+    private DailyGlucoseResponse? _data;
+    private DateTime? _lastLoadedDate;
+
+    private string _selectedDayLabel = "";
+    private bool _hasAnyDayData;
+
+    private List<GlucosePoint> _bucketPoints = new();
+    private List<GlucosePoint> _weeklyRangePointsSafe = new();
+
+    private List<RangePercentageData> _veryLowSeries = new();
+    private List<RangePercentageData> _lowSeries = new();
+    private List<RangePercentageData> _inRangeSeries = new();
+    private List<RangePercentageData> _highSeries = new();
+    private List<RangePercentageData> _veryHighSeries = new();
+
+    private RenderFragment StatCard(string title, string value, string caption) => @<MudPaper Elevation="2" Class="py-2 px-4">
+        <MudText Typo="Typo.subtitle2" Color="MudBlazor.Color.Secondary">@title</MudText>
+        <MudText Typo="Typo.h5">@value</MudText>
+        <MudText Typo="Typo.caption" Style="color:#5183A4">@caption</MudText>
+    </MudPaper>;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!IsActive || !SelectedDate.HasValue) return;
+
+        var d = SelectedDate.Value.Date;
+        if (_lastLoadedDate == d) return;
+
+        _lastLoadedDate = d;
+        await LoadAsync(d);
+    }
+
+    private async Task LoadAsync(DateTime date)
+    {
+        _isLoading = true;
+        try
+        {
+            _data = await DashboardService.GetDailyGlucoseAsync(date);
+            _selectedDayLabel = date.ToString("MMM dd");
+            BuildDerivedData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load daily glucose: {ex.Message}", Severity.Error);
+            _data = null;
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void BuildDerivedData()
+    {
+        if (_data is null) return;
+
+        _hasAnyDayData = _data.Readings.Count > 0;
+
+        _bucketPoints = _data.Buckets
+            .Select(b => new GlucosePoint(b.Time, Value: b.Value, Min: null, Max: null))
+            .ToList();
+
+        _weeklyRangePointsSafe = _data.WeeklyRange
+            .Where(r => r.Min is not null && r.Max is not null)
+            .Select(r => new GlucosePoint(r.Time, Value: null, Min: r.Min, Max: r.Max))
+            .ToList();
+
+        const string cat = "Time in Range";
+        _veryLowSeries = [new RangePercentageData { Category = cat, Percentage = _data.Ranges.VeryLow }];
+        _lowSeries = [new RangePercentageData { Category = cat, Percentage = _data.Ranges.Low }];
+        _inRangeSeries = [new RangePercentageData { Category = cat, Percentage = _data.Ranges.InRange }];
+        _highSeries = [new RangePercentageData { Category = cat, Percentage = _data.Ranges.High }];
+        _veryHighSeries = [new RangePercentageData { Category = cat, Percentage = _data.Ranges.VeryHigh }];
+    }
+
+    private ApexChartOptions<GlucosePoint> _dailyChartOptions => new()
+    {
+        Chart = new Chart
+        {
+            Toolbar = new Toolbar { Show = false },
+            Zoom = new Zoom { Enabled = false }
+        },
+       
+        Xaxis = new XAxis
+        {
+            Type = XAxisType.Datetime,
+            Min = SelectedDate.HasValue ? new DateTimeOffset(SelectedDate.Value.Date).ToUnixTimeMilliseconds() : null,
+            Max = SelectedDate.HasValue ? new DateTimeOffset(SelectedDate.Value.Date.AddDays(1).AddMinutes(-10)).ToUnixTimeMilliseconds() : null,
+            Labels = new XAxisLabels
+            {
+                Show = true,
+                Format = "HH:mm",
+                DatetimeUTC = false
+            },
+            Tooltip = new AxisTooltip { Enabled = false }
+        },
+        Yaxis = new List<YAxis>
+        {
+            new YAxis
+            {
+                ForceNiceScale = true,
+                DecimalsInFloat = 1,
+                Title = new AxisTitle { Text = "Glucose (mmol/L)" },
+                Opposite = true
+            }
+        },
+        Stroke = new Stroke
+        {
+            Width = new List<double> { 0, 3 },
+            Curve = Curve.Straight
+        },
+        Colors = ["#91B3C9", "#AC0000"],
+        Fill = new Fill
+        {
+            Opacity = new List<double> { 0.50, 0.80 }
+        },
+        Tooltip = new Tooltip
+        {
+            Enabled = true,
+            EnabledOnSeries = new List<double> { 0 }
+        }       
+    };
+
+    private readonly ApexChartOptions<RangePercentageData> _rangeChartOptions = new()
+    {
+        Chart = new Chart
+        {
+            Stacked = true,
+            Toolbar = new Toolbar { Show = false },
+            Zoom = new Zoom { Enabled = false }
+        },
+        PlotOptions = new PlotOptions
+        {
+            Bar = new PlotOptionsBar
+            {
+                Horizontal = false,
+                ColumnWidth = "95%",
+                BorderRadius = 8,
+            }
+        },
+        Xaxis = new XAxis
+        {
+            Categories = new List<string> { "Time in Range (Percentages)" },
+            TickPlacement = TickPlacement.On,
+            Labels = new XAxisLabels { Show = false },
+        },
+        Yaxis = new List<YAxis>
+        {
+            new YAxis
+            {
+                Max = 100,
+                Labels = new YAxisLabels { Show = false },
+                Reversed = true
+            }
+        },
+        Grid = new Grid
+        {
+            Padding = new Padding { Left = 0, Right = 0 }
+        },
+        Legend = new Legend { Show = false },
+        Theme = new Theme
+        {
+            Mode = Mode.Light,
+            Palette = PaletteType.Palette1,
+            Monochrome = new ThemeMonochrome
+            {
+                Enabled = true,
+                Color = "#91B3C9",
+                ShadeTo = Mode.Light,
+                ShadeIntensity = 1
+            }
+        }
+    };
+
+    public record DailyGlucoseResponse(
+        List<DailyGlucoseReading> Readings,
+        List<DailyBucketPoint> Buckets,
+        DailyGlucoseStats Stats,
+        DailyGlucoseRanges Ranges,
+        List<DailyRangePoint> WeeklyRange
+    );
+
+    public record DailyGlucoseReading(DateTime Time, double Value);
+    public record DailyBucketPoint(DateTime Time, double? Value);
+    public record DailyGlucoseStats(double Average, double Min, double Max, int Count);
+    public record DailyGlucoseRanges(double VeryLow, double Low, double InRange, double High, double VeryHigh);
+    public record DailyRangePoint(DateTime Time, double? Min, double? Max);
+
+    public record GlucosePoint(DateTime Time, double? Value, double? Min, double? Max);
+
+    public class RangePercentageData
+    {
+        public string Category { get; set; } = string.Empty;
+        public double Percentage { get; set; }
+    }
+}
