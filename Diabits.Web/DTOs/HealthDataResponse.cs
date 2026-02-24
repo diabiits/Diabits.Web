@@ -62,7 +62,7 @@ public class ManualInputDto : HealthDataPointBaseDto
 
     // When the DTO represents a menstruation entry this string holds the flow category (e.g., "LIGHT")
     [JsonPropertyName("flow")]
-    public FlowEnum Flow { get; set; }
+    public FlowEnum? Flow { get; set; }
 }
 
 public class MedicationValueDto
@@ -71,10 +71,10 @@ public class MedicationValueDto
     public string Name { get; set; } = string.Empty;
 
     [JsonPropertyName("quantity")]
-    public decimal Quantity { get; set; }
+    public double Quantity { get; set; }
 
     [JsonPropertyName("strengthValue")]
-    public decimal StrengthValue { get; set; }
+    public double StrengthValue { get; set; }
 
     [JsonPropertyName("strengthUnit")]
     public string StrengthUnit { get; set; } = string.Empty;
@@ -83,3 +83,13 @@ public class MedicationValueDto
 public enum HealthDataType { BLOOD_GLUCOSE, STEPS, HEART_RATE, SLEEP_SESSION, WORKOUT, MENSTRUATION, MEDICATION }
 
 public enum FlowEnum { SPOTTING, LIGHT, MEDIUM, HEAVY }
+
+
+public record TimelineResponse(
+    IEnumerable<NumericDto> GlucoseLevels,
+    IEnumerable<NumericDto> HeartRates,
+    IEnumerable<NumericDto> SleepSessions,
+    IEnumerable<WorkoutDto> Workouts,
+    IEnumerable<ManualInputDto> Medications,
+    ManualInputDto? Menstruation
+);

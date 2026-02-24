@@ -1,0 +1,366 @@
+@using ApexCharts
+@using Diabits.Web.Services.Dashboard
+@using Diabits.Web.DTOs
+@inject DashboardService DashboardService
+@inject ISnackbar Snackbar
+
+<MudPaper Elevation="2" Class="pa-2 flex-grow-1 h-100">
+    @if (_isLoading)
+    {
+        @* TODO Move to own component *@
+        <MudContainer Class="d-flex flex-grow-1 flex-column justify-content-center align-items-center ">
+            <LottiePlayer Path="assets/loading_icon.json" Style=" width:42%;pointer-events:none;" />
+            <MudText Typo="Typo.h6" Color="MudBlazor.Color.Secondary">Loading..</MudText>
+        </MudContainer>
+    }
+    else if (_timelineData != null && HasData())
+    {
+        <MudContainer Class="pa-2">
+            <ApexChart TItem="TimelineDataPoint"
+                       @key="@($"timeline-{SelectedDate:yyyyMMdd}")"
+                       Height="700"
+                       Options="_chartOptions">
+
+                <ApexPointSeries TItem="TimelineDataPoint"
+                                 Items="_menstruationData"
+                                 Name="Menstruation"
+                                 SeriesType="SeriesType.Area"
+                                 XValue="p => p.Time"
+                                 YValue="p => (decimal?)p.Value" />
+
+                <ApexPointSeries TItem="TimelineDataPoint"
+                                 Items="_sleepData"
+                                 Name="Sleep"
+                                 SeriesType="SeriesType.Area"
+                                 XValue="p => p.Time"
+                                 YValue="p => (decimal?)p.Value" />
+
+                <ApexPointSeries TItem="TimelineDataPoint"
+                                 Items="_workoutData"
+                                 Name="Workout"
+                                 SeriesType="SeriesType.Area"
+                                 XValue="p => p.Time"
+                                 YValue="p => (decimal?)p.Value" />
+
+                <ApexPointSeries TItem="TimelineDataPoint"
+                                 Items="_heartRateData"
+                                 Name="Heart Rate"
+                                 SeriesType="SeriesType.Line"
+                                 XValue="p => p.Time"
+                                 YValue="p => (decimal?)p.Value" />
+
+                <ApexPointSeries TItem="TimelineDataPoint"
+                                 Items="_medicationData"
+                                 Name="Medication"
+                                 SeriesType="SeriesType.Scatter"
+                                 XValue="p => p.Time"
+                                 YValue="p => (decimal?)p.Value" />
+
+                <ApexPointSeries TItem="TimelineDataPoint"
+                                 Items="_glucoseData"
+                                 Name="Glucose"
+                                 SeriesType="SeriesType.Line"
+                                 XValue="p => p.Time"
+                                 YValue="p => (decimal?)p.Value" />
+
+            </ApexChart>
+        </MudContainer>
+    }
+    else if (_timelineData != null)
+    {
+        <div class="d-flex justify-center pa-8">
+            <MudText Typo="Typo.body1" Color="MudBlazor.Color.Error">No data available for this date</MudText>
+        </div>
+    }
+</MudPaper>
+
+@code {
+    //TODO Figure out tooltip
+    //TODO Bind SelectedDate
+    [Parameter]
+    public DateTime? SelectedDate { get; set; }
+    [Parameter]
+    public EventCallback<DateTime?> SelectedDateChanged { get; set; }
+
+    private bool _isLoading = false;
+    private TimelineResponse? _timelineData;
+    private DateTime? _lastLoadedDate;
+
+    // Processed chart data
+    private List<TimelineDataPoint> _glucoseData = new();
+    private List<TimelineDataPoint> _heartRateData = new();
+    private List<TimelineDataPoint> _workoutData = new();
+    private List<TimelineDataPoint> _sleepData = new();
+    private List<TimelineDataPoint> _medicationData = new();
+    private List<TimelineDataPoint> _menstruationData = new();
+
+    public class TimelineDataPoint
+    {
+        public DateTime Time { get; set; }
+        public double? Value { get; set; }
+        public string? Name { get; set; }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SelectedDate.HasValue && SelectedDate != _lastLoadedDate)
+        {
+            _lastLoadedDate = SelectedDate;
+            await LoadTimelineDataAsync();
+        }
+    }
+
+    private async Task HandleDateChanged(DateTime? newDate)
+    {
+        if (newDate.HasValue && SelectedDateChanged.HasDelegate)
+        {
+            await SelectedDateChanged.InvokeAsync(newDate);
+        }
+    }
+
+    private bool HasData()
+    {
+        if (_timelineData == null) return false;
+
+        return _timelineData.GlucoseLevels.Any()
+            || _timelineData.HeartRates.Any()
+            || _timelineData.Medications.Any()
+            || _timelineData.Workouts.Any()
+            || _timelineData.SleepSessions.Any()
+            || _timelineData.Menstruation != null;
+    }
+
+    private async Task LoadTimelineDataAsync()
+    {
+        if (!SelectedDate.HasValue) return;
+
+        _isLoading = true;
+        try
+        {
+            _timelineData = await DashboardService.GetTimelineAsync(SelectedDate.Value.Date, bucketMinutes: 10);
+            ProcessTimelineData();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load timeline data: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void ProcessTimelineData()
+    {
+        if (_timelineData == null || !SelectedDate.HasValue) return;
+
+        var selectedDay = SelectedDate.Value.Date;
+
+        // Glucose data (already bucketed by backend)
+        _glucoseData = _timelineData.GlucoseLevels
+            .Select(g => new TimelineDataPoint
+            {
+                Time = g.DateFrom,
+                Value = g.HealthValue.NumericValue
+            })
+            .ToList();
+
+        // Heart rate data (already bucketed by backend)
+        _heartRateData = _timelineData.HeartRates
+            .Select(hr => new TimelineDataPoint
+            {
+                Time = hr.DateFrom,
+                Value = hr.HealthValue.NumericValue
+            })
+            .ToList();
+
+        // Workout area indicators
+        _workoutData = BuildIntervalBand<WorkoutDto>(_timelineData.Workouts);
+
+        // Sleep area indicators
+        _sleepData = BuildIntervalBand<NumericDto>(_timelineData.SleepSessions);
+
+        // Medication markers
+        _medicationData = _timelineData.Medications
+            .Select(m => new TimelineDataPoint
+            {
+                Time = m.DateFrom,
+                Value = 0.5,
+                Name = m.Medication!.Name
+            })
+            .ToList();
+
+        // Menstruatíon area/-marker
+        if (_timelineData.Menstruation is ManualInputDto m)
+        {
+            var value = m.Flow switch
+            {
+                FlowEnum.SPOTTING => 0.1,
+                FlowEnum.LIGHT => 0.25,
+                FlowEnum.MEDIUM => 0.5,
+                FlowEnum.HEAVY => 0.75,
+                _ => (double?)null
+            };
+
+            if (value != null)
+            {
+                //TODO Consider adding both start- and endtime to menstruation
+                _menstruationData.Add(new TimelineDataPoint { Time = selectedDay.AddSeconds(-1), Value = 0 });
+                _menstruationData.Add(new TimelineDataPoint { Time = selectedDay, Value = value.Value });
+                _menstruationData.Add(new TimelineDataPoint { Time = selectedDay.AddDays(1).AddSeconds(-1), Value = value.Value });
+                _menstruationData.Add(new TimelineDataPoint { Time = selectedDay.AddDays(1).AddSeconds(-1), Value = 0 });
+            }
+        }
+    }
+
+    private static List<TimelineDataPoint> BuildIntervalBand<T>(IEnumerable<T> items, double height = 1) where T : HealthDataPointBaseDto
+    {
+        var data = new List<TimelineDataPoint>();
+
+        foreach (var item in items)
+        {
+            var start = item.DateFrom;
+            var end = (DateTime)item.DateTo!;
+
+            data.Add(new TimelineDataPoint { Time = start.AddSeconds(-1), Value = 0 });
+            data.Add(new TimelineDataPoint { Time = start, Value = height });
+            data.Add(new TimelineDataPoint { Time = end, Value = height });
+            data.Add(new TimelineDataPoint { Time = end.AddSeconds(1), Value = 0 });
+        }
+
+        return data;
+    }
+
+    private ApexChartOptions<TimelineDataPoint> _chartOptions => new()
+    {
+        Chart = new Chart
+        {
+            Zoom = new Zoom
+            {
+                AllowMouseWheelZoom = false
+            },
+        },
+        // DataLabels = new DataLabels
+        // {
+        //   Enabled = true
+        // },
+        Xaxis = new XAxis
+        {
+            Type = XAxisType.Datetime,
+            Min = SelectedDate.HasValue ? new DateTimeOffset(SelectedDate.Value.Date).ToUnixTimeMilliseconds() : null,
+            Max = SelectedDate.HasValue ? new DateTimeOffset(SelectedDate.Value.Date.AddDays(1).AddMinutes(-10)).ToUnixTimeMilliseconds() : null,
+            Labels = new XAxisLabels
+            {
+                Show = true,
+                Format = "HH:mm",
+                DatetimeUTC = false
+            },
+            DecimalsInFloat = 1,
+            // Tooltip = new AxisTooltip
+            // {
+            //     Enabled = true
+            // }
+
+        },
+        Yaxis = new List<YAxis>
+        {
+            new YAxis
+            {
+                Min = 0,
+                Max = 1,
+                Show = false,
+                SeriesName = "Menstruation"
+            },
+            new YAxis
+            {
+                Min = 0,
+                Max = 1,
+                Show = false,
+                SeriesName = "Sleep"
+            },
+            new YAxis
+            {
+                Min = 0,
+                Max = 1,
+                Show = false,
+                SeriesName = "Workout"
+            },
+            new YAxis
+            {
+                Opposite = true,
+                Min = 40,
+                Max = 180,
+                DecimalsInFloat = 0,
+                Title = new AxisTitle { Text = "Heart Rate (bpm)" },
+                SeriesName = "Heart Rate"
+            },
+            new YAxis
+            {
+                Min = 0,
+                Max = 1,
+                Show = false,
+                SeriesName = "Medication"
+            },
+            new YAxis
+            {
+                Min = 0,
+                Max = 25,
+                DecimalsInFloat = 1,
+                Title = new AxisTitle { Text = "Glucose Level (mmol/L)" },
+                SeriesName = "Glucose"
+            }
+        },
+        Stroke = new Stroke
+        {
+            Width = new List<double> { 0, 0, 0, 3, 0, 3 },
+            Curve = Curve.Smooth
+        },
+        Colors = ["#9da4a8", "#91B3C9", "#D4C9D8", "#e27396", "#47565f", "#AC0000"],
+        Fill = new Fill
+        {
+            Opacity = new List<double> { 0.3, 0.8, 0.9, 1, 1, 1 },
+        },
+        Markers = new Markers
+        {
+            Size = new List<double> { 0, 0, 0, 0, 8, 0 }
+        },
+        Legend = new Legend
+        {
+            Show = true,
+            Position = LegendPosition.Top,
+            HorizontalAlign = ApexCharts.Align.Left,
+            FontSize = "14px",
+            Markers = new LegendMarkers
+            {
+                Width = 12,
+                Height = 12
+            }
+        },
+        Tooltip = new Tooltip
+        {
+            Enabled = true,
+            Shared = true,
+            EnabledOnSeries = new List<double> { 4, 6 },
+            Intersect = false,
+            X = new TooltipX
+            {
+                Show = true,
+                Format = "HH:mm"
+            },
+            // Y = new TooltipY
+            // {
+            //     Formatter = "function(val, opts) {" +
+            //     "  if (val === null || val === undefined) return undefined;" +
+            //     "  var seriesName = opts.w.config.series[opts.seriesIndex].name;" +
+            //     "  if (seriesName === 'Glucose') return val.toFixed(1) + ' mmol/L';" +
+            //     "  if (seriesName === 'Heart Rate') return Math.round(val) + ' bpm';" +
+            //     "  if (seriesName === 'Medication') return 'Taken';" +
+            //     "  if (seriesName === 'Sleep') return val > 0 ? 'Sleeping' : undefined;" +
+            //     "  if (seriesName === 'Workout') return val > 0 ? 'Active' : undefined;" +
+            //     "  if (seriesName === 'Menstruation') return val > 0 ? 'Yes' : undefined;" +
+            //     "  return val.toFixed(1);" +
+            //     "}"
+            // }
+        }
+    };
+}

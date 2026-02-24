@@ -3,6 +3,7 @@ using ApexCharts;
 using Diabits.Web;
 using Diabits.Web.Infrastructure.Api;
 using Diabits.Web.Services.Auth;
+using Diabits.Web.Services.Dashboard;
 using Diabits.Web.Services.HealthData;
 using Diabits.Web.Services.Invites;
 
@@ -69,6 +70,7 @@ builder.Services.AddSingleton<TokenStorage>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<InviteService>();
 builder.Services.AddScoped<HealthDataService>();
+builder.Services.AddScoped<DashboardService>();
 
 builder.Services.AddScoped<AuthorizationHandler>();
 

@@ -16,7 +16,7 @@
 @* Needed for snackbars *@
 <MudSnackbarProvider />
 
-<MudLayout>
+<MudLayout Class="d-flex flex-column flex-grow-1 vh-100">
     <MudAppBar Elevation="1">
         <MudLink Href="/" Underline="Underline.None" Class="d-flex h-100 py-2">
             <MudImage Src="assets/wordmark_white.png" Alt="Diabits wordmark" />
@@ -29,7 +29,7 @@
         <MudIconButton Icon="@Icons.Material.Filled.Settings" Color="Color.Inherit" OnClick="@(() => Nav.NavigateTo("/settings"))" />
         <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="LogoutAsync" />
     </MudAppBar>
-    <MudMainContent>
+    <MudMainContent Class="d-flex flex-grow-1">
         @Body
     </MudMainContent>
 </MudLayout>
