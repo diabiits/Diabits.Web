@@ -235,41 +235,7 @@ private bool _isLoading;
         {
             Enabled = true,
             EnabledOnSeries = new List<double> { 0 }
-        }
-        //         Tooltip = new Tooltip
-        //         {
-        //             Enabled = true,
-        //             Shared = false,
-        //             Intersect = true,
-        //             FollowCursor = true,
-        //             X = new TooltipX { Show = false },
-
-        //             // Hotfix: JS-side tooltip avoids Blazor interop deserialization of dataPointIndex.
-        //             // Only show tooltip for seriesIndex 1 (daily bucket line).
-        //             Custom = $@"
-        // function({{ series, seriesIndex, dataPointIndex, w }}) {{
-        //   if (seriesIndex !== 1) return '';
-        //   if (dataPointIndex === null || dataPointIndex === undefined || dataPointIndex < 0) return '';
-
-        //   var x = w.globals.seriesX[seriesIndex][dataPointIndex];
-        //   var y = series[seriesIndex][dataPointIndex];
-
-        //   if (y === null || y === undefined) return '';
-
-        //   var d = new Date(x);
-        //   var hh = String(d.getHours()).padStart(2, '0');
-        //   var mm = String(d.getMinutes()).padStart(2, '0');
-
-        //   var label = {System.Text.Json.JsonSerializer.Serialize(_selectedDayLabel)};
-
-        //   return `
-        //     <div style='padding:8px 12px; min-width:200px;'>
-        //       <div style='font-weight:600; margin-bottom:6px;'>${{hh}}:${{mm}}</div>
-        //       <div><strong>${{label}}:</strong> ${{Number(y).toFixed(1)}} mmol/L</div>
-        //     </div>
-        //   `;
-        // }}"
-        //         }
+        }       
     };
 
     private readonly ApexChartOptions<RangePercentageData> _rangeChartOptions = new()
