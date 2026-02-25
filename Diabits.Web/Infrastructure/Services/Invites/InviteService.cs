@@ -2,7 +2,7 @@
 using Diabits.Web.Infrastructure.Api;
 using Diabits.Web.Models;
 
-namespace Diabits.Web.Services.Invites;
+namespace Diabits.Web.Infrastructure.Services.Invites;
 
 /// <summary>
 /// Handles authentication business logic and state management.

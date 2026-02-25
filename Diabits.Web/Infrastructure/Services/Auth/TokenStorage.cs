@@ -2,7 +2,7 @@
 
 using Microsoft.JSInterop;
 
-namespace Diabits.Web.Services.Auth;
+namespace Diabits.Web.Infrastructure.Services.Auth;
 
 /// <summary>
 /// Manages JWT token persistence in browser's localStorage via JavaScript Interop.

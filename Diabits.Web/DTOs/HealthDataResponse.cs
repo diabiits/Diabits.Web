@@ -2,6 +2,7 @@
 
 namespace Diabits.Web.DTOs;
 
+// TODO Split out
 public record HealthDataResponse(
     IEnumerable<NumericDto> GlucoseLevels,
     IEnumerable<NumericDto> HeartRates,
@@ -83,13 +84,3 @@ public class MedicationValueDto
 public enum HealthDataType { BLOOD_GLUCOSE, STEPS, HEART_RATE, SLEEP_SESSION, WORKOUT, MENSTRUATION, MEDICATION }
 
 public enum FlowEnum { SPOTTING, LIGHT, MEDIUM, HEAVY }
-
-
-public record TimelineResponse(
-    IEnumerable<NumericDto> GlucoseLevels,
-    IEnumerable<NumericDto> HeartRates,
-    IEnumerable<NumericDto> SleepSessions,
-    IEnumerable<WorkoutDto> Workouts,
-    IEnumerable<ManualInputDto> Medications,
-    ManualInputDto? Menstruation
-);
