@@ -3,7 +3,7 @@ using Diabits.Web.Infrastructure.Api;
 
 using MudBlazor.Extensions;
 
-namespace Diabits.Web.Services.HealthData;
+namespace Diabits.Web.Infrastructure.Services.HealthData;
 
 public class HealthDataService
 {

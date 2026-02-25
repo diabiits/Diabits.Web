@@ -2,10 +2,10 @@ using ApexCharts;
 
 using Diabits.Web;
 using Diabits.Web.Infrastructure.Api;
-using Diabits.Web.Services.Auth;
-using Diabits.Web.Services.Dashboard;
-using Diabits.Web.Services.HealthData;
-using Diabits.Web.Services.Invites;
+using Diabits.Web.Infrastructure.Services.Auth;
+using Diabits.Web.Infrastructure.Services.Dashboard;
+using Diabits.Web.Infrastructure.Services.HealthData;
+using Diabits.Web.Infrastructure.Services.Invites;
 
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;

@@ -1,7 +1,7 @@
 ﻿using Diabits.Web.DTOs;
 using Diabits.Web.Infrastructure.Api;
 
-namespace Diabits.Web.Services.Auth;
+namespace Diabits.Web.Infrastructure.Services.Auth;
 
 /// <summary>
 /// Handles authentication business logic and state management.

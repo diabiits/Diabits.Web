@@ -4,7 +4,7 @@ using Diabits.Web.Infrastructure.Api;
 using static Diabits.Web.Components.Dashboard.DailyGlucoseTab;
 using static Diabits.Web.Components.Dashboard.TimelineTab;
 
-namespace Diabits.Web.Services.Dashboard;
+namespace Diabits.Web.Infrastructure.Services.Dashboard;
 
 public class DashboardService
 {
